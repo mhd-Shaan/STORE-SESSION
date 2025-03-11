@@ -93,7 +93,7 @@ export default function StoreRegistration3() {
           {/* Store & Pickup Details */}
           <div className="mt-6 space-y-3">
             <p className="text-sm font-medium text-gray-700">
-              Store & Pickup Details
+              Store & Pickup Det
             </p>
             <Input
               onChange={(e) => setData({ ...data, shopName: e.target.value })}
