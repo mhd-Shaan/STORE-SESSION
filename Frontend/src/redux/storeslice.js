@@ -14,6 +14,7 @@ const storeSlice = createSlice({
     },
     logoutstore: (state) => {
       state.store = null;
+      
     },
   },
 });

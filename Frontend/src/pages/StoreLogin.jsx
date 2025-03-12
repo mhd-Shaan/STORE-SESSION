@@ -27,9 +27,21 @@ function StoreLogin() {
         { email, password, mobilenumber },
         { withCredentials: true }
       );
-      toast.success("Welcome back!");
-      dispatch(loginstore(response.data))
-      navigate("/Adminpanel");
+
+
+      if(response.data.userdetails.Store.status === 'approved'){
+        navigate("/Adminpanel");
+        dispatch(loginstore(response.data))
+        toast.success("welcome back")
+      }else if(response.data.userdetails.Store.status === 'rejected'){
+        navigate("/");
+        toast.success("Admin rejected from login")
+        await axios.post('http://localhost:5000/store/logout', {}, { withCredentials: true });
+      }else{
+        navigate("/");
+        toast.success("waiting for admin response")
+      }
+      
     } catch (error) {
       console.error("Failed to login", error);
       toast.error(error.response?.data?.error || "Failed to login");

@@ -18,6 +18,12 @@ const protectRouteStore = async (req, res, next) => {
     }
 
 const Storedata = await Stores.findById(decoded.id)
+
+
+if (Storedata.isBlocked) {  
+  return res.status(400).json({ error: "admin blocked you" }); // ✅ Added return
+}
+
   req.Store = Storedata;
 
       next();

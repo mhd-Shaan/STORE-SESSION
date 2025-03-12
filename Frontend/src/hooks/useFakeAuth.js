@@ -1,11 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import axios from "axios";
-import { loginstore,logoutstore } from "@/redux/storeslice";
+import { loginstore, logoutstore } from "@/redux/storeslice";
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 
 function useFakeAuth() {
+  const { store } = useSelector((state) => state.store);
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState(true); // ✅ Added loading state
+  const [loading, setLoading] = useState(true);
+  const errorShown = useRef(false);
+  
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -13,25 +18,32 @@ function useFakeAuth() {
         const res = await axios.get("http://localhost:5000/store/fakeauth", {
           withCredentials: true,
         });
-        if (res.status === 200) {
+
+        if (res.data.status === "approved") {
           dispatch(loginstore(res.data));
-          console.log('log from fakeauth',res.data);
-          
-        } else {
+        } else if (res.data.status === "rejected") {
           dispatch(logoutstore());
+          await axios.post("http://localhost:5000/store/logout", {}, { withCredentials: true });
         }
       } catch (error) {
-        console.log(error);
+        if (!errorShown.current && error.response?.data?.error) {
+          toast.error(error.response.data.error);
+          errorShown.current = true;
+        }else{
+          console.log(error);
+        }
+
         dispatch(logoutstore());
+        // await axios.post("http://localhost:5000/store/logout", {}, { withCredentials: true });
       } finally {
-        setLoading(false); 
+        setLoading(false);
       }
     };
 
     checkAuth();
-  }, [dispatch]); 
+  }, [dispatch]); // ✅ No unnecessary re-renders
 
-  return { loading }; 
+  return { loading };
 }
 
 export default useFakeAuth;

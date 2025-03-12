@@ -205,6 +205,9 @@ if (!mobilenumber || mobilenumber.length !== 10 || isNaN(mobilenumber)) {
 const matchnumber = await compareMobileNumber(mobilenumber,Store.mobileNumber)
     if(!matchnumber) return res.status(403).json({error:"Enter correct mobilenumber"})
 
+      if (Store.isBlocked)
+        return res.status(403).json({ error: "Your account is blocked. Contact support."  });
+
       jwt.sign({id:Store.id},process.env.jwt_SECRET,{},(err,token)=>{
         if(err) throw err;
     
@@ -220,9 +223,7 @@ const matchnumber = await compareMobileNumber(mobilenumber,Store.mobileNumber)
           success: true,
           message: "Login successful",
           userdetails: {
-              id: Store._id,
-              mobilenumber: Store.mobileNumber,
-              email: Store.email,
+              Store,
           },
           token,
       });
@@ -244,3 +245,13 @@ export const FakeAuth = async(req,res)=>{
     res.status(500).json({ msg: error.message });
   }
 }
+
+export const logoutStore = async (req, res) => {
+  try {
+    res.clearCookie("token", { httpOnly: true, secure: true, sameSite: "none" }); // Ensure it matches the token name
+    res.status(200).json({ msg: "Logout successful" });
+  } catch (error) {
+    console.error("Error from logoutStore:", error.message);
+    res.status(500).json({ msg: "Internal server error" });
+  }
+};

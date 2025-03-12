@@ -25,7 +25,7 @@ function App() {
       <Toaster position="top-right" reverseOrder={false} />
       <Router>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={store ?<AdminPanel/>:<Home />} />
           <Route
             path="/Storeregstration1"
             element={store ? <AdminPanel /> : <StoreRegstration1 />}
