@@ -10,6 +10,10 @@ import AdminPanel from "./pages/AdminPanel";
 import { useSelector } from "react-redux";
 import useFakeAuth from "./hooks/useFakeAuth";
 import { Loader } from "lucide-react";
+import Layout from "./component/Layout";
+import ProductManagment from "./pages/storepanel/ProductManagment";
+import OrderManagment from "./pages/storepanel/OrderManagment";
+import Advertisment from "./pages/storepanel/Advertisment";
 
 function App() {
   const { loading } = useFakeAuth(); // ✅ Hook now returns loading
@@ -44,8 +48,21 @@ function App() {
           ></Route>
           <Route
             path="/Adminpanel"
-            element={store ? <AdminPanel /> : <StoreLogin />}
+            element={store ? <Layout> <AdminPanel /></Layout>  : <StoreLogin />}
           ></Route>
+          <Route
+  path="product-managment"
+  element={<Layout><ProductManagment/></Layout>}
+/>
+<Route
+  path="order-managment"
+  element={<Layout><OrderManagment/></Layout>}
+/>
+<Route
+  path="advertisment"
+  element={<Layout><Advertisment/></Layout>}
+/>
+
         </Routes>
       </Router>
     </>

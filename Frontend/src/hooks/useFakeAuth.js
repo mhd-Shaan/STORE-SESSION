@@ -41,8 +41,7 @@ function useFakeAuth() {
     };
 
     checkAuth();
-  }, [dispatch]); // ✅ No unnecessary re-renders
-
+  }, [dispatch]);
   return { loading };
 }
 
