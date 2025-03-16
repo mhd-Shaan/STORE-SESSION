@@ -14,6 +14,7 @@ import Layout from "./component/Layout";
 import ProductManagment from "./pages/storepanel/ProductManagment";
 import OrderManagment from "./pages/storepanel/OrderManagment";
 import Advertisment from "./pages/storepanel/Advertisment";
+import AddingProducts from "./pages/storepanel/AddingProducts";
 
 function App() {
   const { loading } = useFakeAuth(); // ✅ Hook now returns loading
@@ -46,23 +47,28 @@ function App() {
             path="/Storelogin"
             element={store ? <AdminPanel /> : <StoreLogin />}
           ></Route>
-          <Route
+         
+<Route element={<Layout/>}>
+<Route
             path="/Adminpanel"
-            element={store ? <Layout> <AdminPanel /></Layout>  : <StoreLogin />}
+            element={store ?  <AdminPanel />  : <StoreLogin />}
           ></Route>
           <Route
   path="product-managment"
-  element={<Layout><ProductManagment/></Layout>}
+  element={<ProductManagment/>}
 />
 <Route
   path="order-managment"
-  element={<Layout><OrderManagment/></Layout>}
+  element={<OrderManagment/>}
 />
 <Route
   path="advertisment"
-  element={<Layout><Advertisment/></Layout>}
+  element={<Advertisment/>}
 />
+<Route path="addingproducts" element={<AddingProducts/>}></Route>
 
+
+</Route>
         </Routes>
       </Router>
     </>

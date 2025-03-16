@@ -2,7 +2,7 @@ import express from 'express';
 // import {protectRouteuser} from '../middleware/authmiddleware.js'
 import {  FakeAuth, logoutStore, otpsending, StoreLogin, StoreRegestration1, StoreRegestration2, StoreRegestration3, verifyOTPforStore } from '../controllers/storeController.js';
 import { protectRouteStore } from '../middleware/authmiddleware.js';
-import { addproduct } from '../controllers/productController.js';
+import { addProduct, showProduct } from '../controllers/productController.js';
 import upload from '../config/multer.js';
 
 const router = express.Router();
@@ -15,5 +15,6 @@ router.post("/register3",StoreRegestration3)
 router.post('/loginstore',StoreLogin)
 router.get("/fakeauth",protectRouteStore,FakeAuth)
 router.post('/logout',logoutStore)
-router.post('/addproduct', upload.single('image'), addproduct);
+router.post("/addproduct", upload.array("images", 5), addProduct);
+router.get('/showproducts',showProduct)
 export default router;
