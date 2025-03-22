@@ -3,7 +3,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom"; // Import Link for navigation
 import {toast} from 'react-hot-toast'
-import StoreRegstration2 from "./StoreRegistration2";
+import { useDispatch } from "react-redux";
+import { updateRegistrationStep } from "../redux/storeslice.js";
 
 const StoreRegstration1 = () => {
   const [StoreData, setStoreData] = useState({
@@ -18,6 +19,8 @@ const StoreRegstration1 = () => {
   const [timer, setTimer] = useState(300);
 
 const navigate = useNavigate()
+const dispatch = useDispatch();
+
 
   const Register1 = async(e)=>{
     e.preventDefault();
@@ -25,6 +28,7 @@ const navigate = useNavigate()
       const res = await axios.post("http://localhost:5000/store/register1", StoreData); 
       toast.success(res.data.msg || "register completed 1")
    setRegistrationData(StoreData)
+   dispatch(updateRegistrationStep(2));
    navigate("/Storeregstration2", { state: { email: StoreData.email } });
 
   } catch (error) {

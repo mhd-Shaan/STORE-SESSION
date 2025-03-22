@@ -30,7 +30,7 @@ function useFakeAuth() {
           toast.error(error.response.data.error);
           errorShown.current = true;
         }else{
-          console.log(error);
+          console.log(error.message);
         }
 
         dispatch(logoutstore());

@@ -6,6 +6,9 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { updateRegistrationStep } from "../redux/storeslice.js"
+import { useDispatch } from "react-redux";
+
 
 export default function StoreRegstration2() {
     const [data,setData]=useState({
@@ -14,9 +17,11 @@ export default function StoreRegstration2() {
         shopName:""
     })
     const location = useLocation();
-    const email = location.state?.email || ""; // Default empty if not found
-console.log('email from register1',email)
+    const email = location.state?.email || ""; 
 const navigate = useNavigate()
+const dispatch = useDispatch();
+dispatch(updateRegistrationStep(3));
+
 
     const handleSubmit = async(e)=>{
         e.preventDefault();
