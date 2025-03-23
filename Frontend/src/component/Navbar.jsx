@@ -2,11 +2,26 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false); // State for showing the dialog
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+const logout=async(req,res)=>{
+  try {
+    await axios.post("http://localhost:5000/store/logout", {}, { withCredentials: true });
+    toast.success('logout succesfully')
+    navigate('/')
+    
+  } catch (error) {
+    console.log(error);
+    toast.error('error')
+  }
+}
+
 
   // Open the confirmation dialog
   const handleOpenDialog = () => setOpen(true);
@@ -16,7 +31,8 @@ const Navbar = () => {
 
   // Logout and close the dialog
   const handleLogout = () => {
-    // navigate('/'); // Navigate to the login page
+    logout()
+    navigate('/Storelogin');
     // setOpen(false); // Close the dialog after logout action
   };
 

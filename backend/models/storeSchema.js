@@ -5,6 +5,7 @@ const storeSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
+    sparse:true
   },
   email: {
     type: String,
@@ -22,7 +23,7 @@ const storeSchema = new mongoose.Schema({
   fullName: {
     type: String,
   },
-  shopName: {
+  pannumber: {
     type: String,
   },
   pickupDetails: {

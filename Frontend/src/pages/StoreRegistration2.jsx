@@ -14,7 +14,7 @@ export default function StoreRegstration2() {
     const [data,setData]=useState({
         password:"",
         fullName:"",
-        shopName:""
+        pannumber:""
     })
     const location = useLocation();
     const email = location.state?.email || ""; 
@@ -70,7 +70,7 @@ dispatch(updateRegistrationStep(3));
         <div className="mt-6 space-y-4">
           <Input type="password" placeholder="Create Password" className="w-full"  onChange={(e)=>setData({...data,password:e.target.value})} />
           <Input type="text" placeholder="Enter Your Full Name" className="w-full"  onChange={(e)=>setData({...data,fullName:e.target.value})} />
-          <Input type="text" placeholder="Enter Store Name" className="w-full" onChange={(e)=>setData({...data,shopName:e.target.value})} />
+          <Input type="text" placeholder="Enter PanCardNumber" className="w-full" onChange={(e)=>setData({...data,pannumber:e.target.value})} />
         </div>
 
         {/* Button */}
