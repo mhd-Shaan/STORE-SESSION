@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { TextField, Button, Paper, Box, MenuItem } from "@mui/material";
+import { TextField, Button, Paper, Box, MenuItem, IconButton } from "@mui/material";
+import { Delete } from "@mui/icons-material";
 import toast from "react-hot-toast";
 
 export default function EditProduct() {
@@ -9,7 +10,7 @@ export default function EditProduct() {
   const navigate = useNavigate();
   const selectedProduct = location.state?.product;
 
-  // Initialize state with selectedProduct if available
+  // Initialize state with selected product or empty values
   const [product, setProduct] = useState(selectedProduct || {
     vehicleType: "",
     vehicleBrand: "",
@@ -24,39 +25,69 @@ export default function EditProduct() {
     images: [],
   });
 
-  const [newImages, setNewImages] = useState([]); 
+  // Track existing and new images separately
+  const [existingImages, setExistingImages] = useState(selectedProduct?.images || []);
+  const [newImages, setNewImages] = useState([]);
+  const [deletedImages, setDeletedImages] = useState([]); // Track deleted images
 
   useEffect(() => {
     if (selectedProduct) {
       setProduct(selectedProduct);
+      setExistingImages(selectedProduct.images || []);
     }
-  }, [selectedProduct]); 
+  }, [selectedProduct]);
 
+  // Handle text field changes
   const handleChange = (e) => {
     setProduct({ ...product, [e.target.name]: e.target.value });
   };
 
+  // Handle new image selection (max 5 total)
   const handleImageChange = (e) => {
-    setNewImages([...newImages, ...e.target.files]);
+    const selectedFiles = Array.from(e.target.files);
+    const totalImages = existingImages.length + newImages.length + selectedFiles.length - deletedImages.length;
+
+    if (totalImages > 5) {
+      toast.error("You can only upload up to 5 images.");
+      return;
+    }
+
+    setNewImages([...newImages, ...selectedFiles]);
   };
 
+  // Handle delete existing image
+  const handleDeleteExistingImage = (index) => {
+    const imageToDelete = existingImages[index];
+    setDeletedImages([...deletedImages, imageToDelete]); // Store deleted image
+    setExistingImages(existingImages.filter((_, i) => i !== index)); // Remove from UI
+  };
+
+  // Handle delete new image
+  const handleDeleteNewImage = (index) => {
+    setNewImages(newImages.filter((_, i) => i !== index));
+  };
+
+  // Handle product update
   const handleUpdate = async (e) => {
     e.preventDefault();
     const formData = new FormData();
 
+    // Append product data
     Object.keys(product).forEach((key) => {
       formData.append(key, product[key]);
     });
 
-    // Append existing images (retain old ones)
-    product.images.forEach((img) => {
-      formData.append("existingImages", img);
-    });
+    // Append remaining existing images (not deleted ones)
+    formData.append("existingImages", JSON.stringify(existingImages));
 
     // Append new images
     newImages.forEach((file) => {
       formData.append("images", file);
     });
+
+    // Append deleted images
+    formData.append("deletedImages", JSON.stringify(deletedImages));
+
     try {
       await axios.put(`http://localhost:5000/store/editproduct/${product._id}`, formData, {
         withCredentials: true,
@@ -89,16 +120,40 @@ export default function EditProduct() {
           <TextField label="Part Type" name="partType" value={product.partType} onChange={handleChange} fullWidth sx={{ mb: 2 }} />
           <TextField label="Spare Brand" name="spareBrand" value={product.spareBrand} onChange={handleChange} fullWidth sx={{ mb: 2 }} />
 
+          {/* Image Preview Section (Single Row) */}
           <div className="mb-4">
-            <p className="text-sm font-semibold mb-2">Existing Images</p>
-            <div className="flex space-x-2">
-              {product.images.map((img, index) => (
-                <img key={index} src={img} alt="Product" className="w-16 h-16 rounded border" />
+            <p className="text-sm font-semibold mb-2">Product Images</p>
+            <div className="flex flex-wrap gap-2">
+              {/* Display Existing Images */}
+              {existingImages.map((img, index) => (
+                <div key={`existing-${index}`} className="relative">
+                  <img src={img} alt="Existing" className="w-16 h-16 rounded border" />
+                  <IconButton 
+                    size="small" 
+                    onClick={() => handleDeleteExistingImage(index)} 
+                    sx={{ position: "absolute", top: -5, right: -5 }}>
+                    <Delete fontSize="small" color="error" />
+                  </IconButton>
+                </div>
+              ))}
+
+              {/* Display New Images */}
+              {newImages.map((file, index) => (
+                <div key={`new-${index}`} className="relative">
+                  <img src={URL.createObjectURL(file)} alt="New" className="w-16 h-16 rounded border" />
+                  <IconButton 
+                    size="small" 
+                    onClick={() => handleDeleteNewImage(index)} 
+                    sx={{ position: "absolute", top: -5, right: -5 }}>
+                    <Delete fontSize="small" color="error" />
+                  </IconButton>
+                </div>
               ))}
             </div>
           </div>
 
-          <input type="file" multiple onChange={handleImageChange} className="mb-4" />
+          {/* File Input for Adding New Images */}
+          <input type="file" multiple onChange={handleImageChange} className="mb-4" disabled={existingImages.length + newImages.length >= 5} />
 
           <Button variant="contained" color="primary" type="submit">
             Update Product

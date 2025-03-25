@@ -1,4 +1,3 @@
-import { error } from "console";
 import Product from "../models/productSchema.js";
 
 export const addProduct = async (req, res) => {
@@ -78,10 +77,39 @@ export const addProduct = async (req, res) => {
 
 export const showProduct = async (req, res) => {
   try {
-    const storeid = req.storeid;
-    const productdetails = await Product.find({ storeid });
+    const storeidd = req.storeid;
+
+    const {page=1,limit=10,search='',status='all'}=req.query    
+
+    const skip =(page - 1)*limit;
+
+    const searchFilter ={
+      storeid: storeidd, 
+      $or: [
+        { productName: { $regex: search, $options: "i" } }, 
+        { productId: { $regex: search, $options: "i" } }, 
+      ],
+    }
+
+    
+
+    if(status === 'block'){
+      searchFilter.isBlock=true
+    }
+    else if(status === 'unblocked'){
+      searchFilter.isBlock=false
+    }
+
+    const totalproduct = await Product.countDocuments(searchFilter)
+
+
+
+    const productdetails = await Product.find(searchFilter).skip(skip).limit(Number(limit));
+
     res.status(200).json({
-      message: "product get success",
+      totalproduct,
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalproduct / limit),
       productdetails,
     });
   } catch (error) {
@@ -105,41 +133,40 @@ export const Editproduct = async (req, res) => {
       price,
       stockQuantity,
       description,
-     } = req.body;
+      existingImages, // JSON string of existing images from frontend
+      deletedImages,  // JSON string of deleted images from frontend
+    } = req.body;
 
-    //  const product = await Product.findById(Productid);
-    //  if (!product) {
-    //    return res.status(404).json({ error: "Product not found" });
-    //  }
+    // Input Validations
+    if (!vehicleType) return res.status(400).json({ error: "Vehicle type is required" });
+    if (!vehicleBrand) return res.status(400).json({ error: "Vehicle brand is required" });
+    if (!vehicleModel) return res.status(400).json({ error: "Vehicle model is required" });
+    if (!partType) return res.status(400).json({ error: "Part type is required" });
+    if (!spareBrand) return res.status(400).json({ error: "Spare brand is required" });
+    if (!productId) return res.status(400).json({ error: "Product ID is required" });
+    if (!productName) return res.status(400).json({ error: "Product name is required" });
+    if (!price || isNaN(price)) return res.status(400).json({ error: "Valid price is required" });
+    if (!stockQuantity || isNaN(stockQuantity)) return res.status(400).json({ error: "Valid stock quantity is required" });
 
-    // if (!req.files || req.files.length === 0) {
-    //   return res.status(400).json({ message: "No images uploaded" });
-    // }
+    // Fetch existing product
+    const product = await Product.findById(Productid);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
 
-    if (!vehicleType)
-      return res.status(400).json({ error: "Vehicle type is required" });
-    if (!vehicleBrand)
-      return res.status(400).json({ error: "Vehicle brand is required" });
-    if (!vehicleModel)
-      return res.status(400).json({ error: "Vehicle model is required" });
-    if (!partType)
-      return res.status(400).json({ error: "Part type is required" });
-    if (!spareBrand)
-      return res.status(400).json({ error: "Spare brand is required" });
-    if (!productId)
-      return res.status(400).json({ error: "Product ID is required" });
-    if (!productName)
-      return res.status(400).json({ error: "Product name is required" });
-    if (!price || isNaN(price))
-      return res.status(400).json({ error: "Valid price is required" });
-    if (!stockQuantity || isNaN(stockQuantity))
-      return res
-        .status(400)
-        .json({ error: "Valid stock quantity is required" });
+    // Parse JSON strings
+    let updatedImages = JSON.parse(existingImages || "[]");
+    const deletedImagesArray = JSON.parse(deletedImages || "[]");
 
-    const imageUrls = req.files.map((file) => file.path);
+    // Remove deleted images
+    updatedImages = updatedImages.filter(img => !deletedImagesArray.includes(img));
 
-    const product = await Product.findByIdAndUpdate(
+    // Add newly uploaded images
+    const newImageUrls = req.files.map((file) => file.path);
+    updatedImages = [...updatedImages, ...newImageUrls];
+
+    // Update product
+    const updatedProduct = await Product.findByIdAndUpdate(
       Productid,
       {
         vehicleType,
@@ -152,20 +179,18 @@ export const Editproduct = async (req, res) => {
         productName,
         description,
         price,
-        images: imageUrls,
+        images: updatedImages, // Store final image list
       },
       { new: true }
     );
-    if (!product) {
-      return res.status(404).json({ error: "product not found" });
-    }
-    res.status(200).json({ message: "product updated successfully", product });
+
+    res.status(200).json({ message: "Product updated successfully", product: updatedProduct });
   } catch (error) {
-    res.status(400).json({error})
-    console.log(error);
-    
+    console.error(error);
+    res.status(500).json({ error: "Server error while updating product" });
   }
 };
+
 
 
 export const DeleteProduct = async(req,res)=>{
