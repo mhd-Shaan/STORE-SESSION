@@ -77,6 +77,7 @@ export const otpsending = async (req, res) => {
     if (otp) {
       await OTPVerification.deleteOne({ email });
     }
+    
     if (store)
       return res.status(404).json({ error: "this store already registred" });
     await sendOTP(email, "store");
@@ -265,7 +266,6 @@ export const StoreLogin = async (req, res) => {
 
 export const FakeAuth = async (req, res) => {
   try {
-    console.log("controll", req.Store);
     res.status(200).json(req.Store);
   } catch (error) {
     console.log("error from checkAuth", error.message);

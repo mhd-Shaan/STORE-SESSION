@@ -16,6 +16,8 @@ import ProductManagment from "./pages/storepanel/ProductManagment";
 import OrderManagment from "./pages/storepanel/OrderManagment";
 import Advertisment from "./pages/storepanel/Advertisment";
 import AddingProducts from "./pages/storepanel/AddingProducts";
+import Storefake from "./pages/storepanel/storefake";
+import Editproduct from "./pages/storepanel/Editproduct";
 
 // ProtectedRoute component
 function ProtectedRoute() {
@@ -28,8 +30,6 @@ function App() {
   const { loading } = useFakeAuth();
   const { store, registrationStep } = useSelector((state) => state.store);
 
-console.log(registrationStep);
-
   if (loading) {
     return <Loader />;
   }
@@ -39,6 +39,7 @@ console.log(registrationStep);
       <Toaster position="top-right" reverseOrder={false} />
       <Router>
         <Routes>
+          <Route path="/fake" element={<Storefake/>}></Route>
           <Route path="/" element={<Home />} />
           <Route path="/Storelogin" element={store ? <Navigate to="/Adminpanel" /> : <StoreLogin />} />
 
@@ -54,6 +55,7 @@ console.log(registrationStep);
               <Route path="/order-managment" element={<OrderManagment />} />
               <Route path="/advertisment" element={<Advertisment />} />
               <Route path="/addingproducts" element={<AddingProducts />} />
+              <Route path="/edit-product" element={<Editproduct/>}></Route>
             </Route>
           </Route>
           

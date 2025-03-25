@@ -112,14 +112,15 @@ const AddingProducts = () => {
       });
   
       await axios.post("http://localhost:5000/store/addproduct", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+         withCredentials: true ,
       });
   
       toast.success("Product added successfully!");
       navigate("/product-managment");
     } catch (error) {
-      console.error("Error uploading product:", error);
-      toast.error("Failed to add product.");
+      toast.error(error.response.data.error);
+      console.log(error);
+      
     }
   };
   

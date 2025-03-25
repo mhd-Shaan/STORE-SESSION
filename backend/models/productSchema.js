@@ -1,7 +1,11 @@
 import mongoose from "mongoose";
+import { type } from "os";
 
 const productSchema = new mongoose.Schema(
   {
+    storeid:{
+      type:String,
+    },
     vehicleType: {
       type: String,
       required: true,
@@ -25,7 +29,6 @@ const productSchema = new mongoose.Schema(
     },
     productId: {
       type: String,
-      unique: true,
       required: true,
     },
     productName: {
@@ -46,6 +49,10 @@ const productSchema = new mongoose.Schema(
     images: {
       type: [String], // Array of image URLs
       required: true,
+    },
+    isBlock:{
+      type:Boolean,
+      default:false
     },
   },
   { timestamps: true } // Adds createdAt and updatedAt fields

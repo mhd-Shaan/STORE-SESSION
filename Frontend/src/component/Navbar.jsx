@@ -23,7 +23,6 @@ const logout=async(req,res)=>{
 }
 
 
-  // Open the confirmation dialog
   const handleOpenDialog = () => setOpen(true);
 
   // Close the confirmation dialog

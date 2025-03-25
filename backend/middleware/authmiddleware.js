@@ -2,10 +2,8 @@ import jwt from "jsonwebtoken"
 import Stores from "../models/storeSchema.js";
 
 const protectRouteStore = async (req, res, next) => {
-  console.log("protectRoute middleware triggered");
 
   try {
-    console.log(req.cookies);
     
     const token = req.cookies?.token// Ensure token is read properly
     if (!token) {
@@ -25,6 +23,7 @@ if (Storedata.isBlocked) {
 }
 
   req.Store = Storedata;
+  req.storeid=decoded.id
 
       next();
 
