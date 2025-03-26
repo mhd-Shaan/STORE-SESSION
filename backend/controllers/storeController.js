@@ -21,7 +21,6 @@ export const StoreRegestration1 = async (req, res) => {
     }
     if (!email) return res.status(400).json({ error: "Email is required" });
 
-    
     const existingStore = await Stores.findOne({ email });
     if (existingStore)
       return res
@@ -53,8 +52,7 @@ export const StoreRegestration1 = async (req, res) => {
             Gst,
           },
         }
-      )
-
+      );
     } else {
       return res.status(400).json({ error: "OTP is not verified" });
     }
@@ -77,10 +75,10 @@ export const otpsending = async (req, res) => {
     if (otp) {
       await OTPVerification.deleteOne({ email });
     }
-    
+
     if (store)
       return res.status(404).json({ error: "this store already registred" });
-    await sendOTP(email, "store");
+    await sendOTP(email);
     res.status(200).json({ message: "otp sended" });
   } catch (error) {
     res.status(500).json({ error: "otp sending failed" });
@@ -146,6 +144,7 @@ export const StoreRegestration2 = async (req, res) => {
     stores.fullName = fullName;
     stores.password = hashedPassword;
     stores.pannumber = pannumber;
+    
 
     await stores.save();
 
@@ -162,7 +161,7 @@ export const StoreRegestration3 = async (req, res) => {
 
     const { email, GSTIN, shopName, pickupCode, address, storeDescription } =
       req.body;
-      if(!email) return res.status(400).json({error:"email is required"})
+    if (!email) return res.status(400).json({ error: "email is required" });
     if (!GSTIN) return res.status(400).json({ error: "GSTIN is required" });
     if (!shopName)
       return res.status(400).json({ error: "shopname is required" });
@@ -178,13 +177,17 @@ export const StoreRegestration3 = async (req, res) => {
     if (!storeExists) {
       return res.status(404).json({ error: "stores not found" });
     }
+    console.log(storeExists.pannumber);
+    
     const newStore = new Stores({
       email: storeExists.email,
       mobileNumber: storeExists.mobileNumber,
-      password:storeExists.password,
-      fullName:storeExists.fullName,
+      password: storeExists.password,
+      fullName: storeExists.fullName,
+      pannumber:storeExists.pannumber,
       GSTIN,
       storeDescription,
+
       pickupDetails: {
         shopName,
         pickupCode,
@@ -226,7 +229,6 @@ export const StoreLogin = async (req, res) => {
     if (!match)
       return res.status(403).json({ error: "Enter correct password" });
 
-    
     const matchnumber = await compareMobileNumber(
       mobilenumber,
       Store.mobileNumber
@@ -284,5 +286,58 @@ export const logoutStore = async (req, res) => {
   } catch (error) {
     console.error("Error from logoutStore:", error.message);
     res.status(500).json({ msg: "Internal server error" });
+  }
+};
+
+export const editstore = async (req, res) => {
+  try {
+    const storeid = req.storeid;
+    const {
+      email,
+      mobileNumber,
+      fullName,
+      pannumber,
+      GSTIN,
+      shopName,
+      pickupCode,
+      address,
+      storeDescription,
+    } = req.body;
+    if (!fullName)
+      return res.status(400).json({ error: "fullName is required" });
+    // if (!email) return res.status(400).json({ error: "email is required" });
+    if (!mobileNumber)
+      return res.status(400).json({ error: "MobileNumber is required" });
+    if (!shopName)
+      return res.status(400).json({ error: "ShopName is required" });
+    if (!GSTIN) return res.status(400).json({ error: "GSTIN is required" });
+    if (!pannumber)
+      return res.status(400).json({ error: "pannumber is required" });
+    if (!address) return res.status(400).json({ error: "address is required" });
+    if (!pickupCode)
+      return res.status(400).json({ error: "pickupCode is required" });
+    if (!storeDescription)
+      return res.status(400).json({ error: "storeDescription is required" });
+
+    const store = await Stores.findByIdAndUpdate(storeid,
+      {
+      fullName,
+      mobileNumber,
+      GSTIN,
+      pannumber,
+      pickupDetails: {
+        shopName,
+        pickupCode,
+        address,
+      },
+      storeDescription
+    },{ new: true }
+  )
+  res.status(200).json({ message: "store updated successfully", store });
+
+  } catch (error) {
+    console.log('error on edit store ',error);
+    res.status(404).json({error})
+    
   }
 };

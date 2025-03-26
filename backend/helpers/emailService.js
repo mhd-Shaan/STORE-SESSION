@@ -1,30 +1,56 @@
 import nodemailer from "nodemailer";
 import crypto from "crypto";
-import OtpVerification from '../models/otpschema.js'
+import OtpVerification from '../models/otpschema.js';
 
 export const sendOTP = async (email, type) => {
-  if (!email) throw new Error("Email is required");
-  if (!type) throw new Error("OTP type is required (user/store)");
+  try {
+    if (!email) throw new Error("Email is required");
+    
+    console.log(`Sending OTP to: ${email}`);
 
-  const otp = crypto.randomInt(100000, 999999).toString(); // Generate 6-digit OTP
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // OTP expires in 10 mins
+    const otp = crypto.randomInt(100000, 999999).toString(); // Generate 6-digit OTP
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // OTP expires in 10 mins
 
-  await OtpVerification.create({ email, otp, type, expiresAt }); // Make sure type is saved
+    await OtpVerification.findOneAndUpdate(
+      { email },
+      { otp, expiresAt },
+      { upsert: true, new: true }
+    );
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+    // **Define the transporter inside the function**
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+   
+        
+      },
+    });    
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: "Your OTP Code",
-    text: `Your OTP code is ${otp}. It will expire in 10 minutes.`,
-  });
+    // Verify the transporter
+    transporter.verify((error, success) => {
+      if (error) {
+        console.error("Nodemailer Transporter Error:", error);
+      } else {
+        console.log("Mail server is ready to send emails");
+      }
+    });
 
-  return { message: "OTP sent to email" };
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Your OTP Code",
+      text: `Your OTP code is ${otp}. It will expire in 10 minutes.`,
+    };
+
+    const emailResponse = await transporter.sendMail(mailOptions);
+    
+    console.log("Email sent successfully:", emailResponse);
+
+    return { message: "OTP sent to email successfully" };
+  } catch (error) {
+    console.error("Error sending OTP:", error);
+    throw new Error("Failed to send OTP. Please try again.");
+  }
 };
