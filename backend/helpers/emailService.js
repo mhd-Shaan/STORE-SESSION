@@ -54,3 +54,6 @@ export const sendOTP = async (email, type) => {
     throw new Error("Failed to send OTP. Please try again.");
   }
 };
+
+
+

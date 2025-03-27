@@ -1,12 +1,11 @@
 import axios from "axios";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { loginstore } from "@/redux/storeslice";
 
 function StoreLogin() {
-  // ✅ Corrected useState destructuring
   const [StoreData, setStoreData] = useState({
     email: "",
     mobilenumber: "",
@@ -14,8 +13,7 @@ function StoreLogin() {
   });
 
   const navigate = useNavigate();
-  const dispatch = useDispatch()
-
+  const dispatch = useDispatch();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -28,20 +26,22 @@ function StoreLogin() {
         { withCredentials: true }
       );
 
-
-      if(response.data.userdetails.Store.status === 'approved'){
+      if (response.data.userdetails.Store.status === "approved") {
         navigate("/Adminpanel");
-        dispatch(loginstore(response.data))
-        toast.success("welcome back")
-      }else if(response.data.userdetails.Store.status === 'rejected'){
+        dispatch(loginstore(response.data));
+        toast.success("Welcome back");
+      } else if (response.data.userdetails.Store.status === "rejected") {
         navigate("/");
-        toast.success("Admin rejected from login")
-        await axios.post('http://localhost:5000/store/logout', {}, { withCredentials: true });
-      }else{
+        toast.error("Admin rejected your login request");
+        await axios.post(
+          "http://localhost:5000/store/logout",
+          {},
+          { withCredentials: true }
+        );
+      } else {
         navigate("/");
-        toast.success("waiting for admin response")
+        toast.info("Waiting for admin approval");
       }
-      
     } catch (error) {
       console.error("Failed to login", error);
       toast.error(error.response?.data?.error || "Failed to login");
@@ -52,10 +52,9 @@ function StoreLogin() {
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
       <div className="bg-white shadow-md rounded-lg p-6 w-full max-w-lg">
         <h2 className="text-xl font-semibold text-gray-700 mb-4 text-center">
-          Login Page
+          Store Login
         </h2>
 
-        {/* Form Fields */}
         <form onSubmit={handleLogin}>
           <div className="space-y-4">
             {/* Email */}
@@ -105,15 +104,16 @@ function StoreLogin() {
                 placeholder="Enter Password"
               />
             </div>
-          </div>
 
-          {/* Terms & Register Button */}
-          <div className="mt-4 text-center text-sm text-gray-500">
-            By continuing, I agree to the{" "}
-            <a href="#" className="text-blue-500 underline">
-              Terms of Use & Privacy Policy
-            </a>
-            .
+            {/* Forgot Password Link */}
+            <div className="text-right">
+              <Link
+                to="/forget-password"
+                className="text-blue-500 hover:underline text-sm"
+              >
+                Forgot Password?
+              </Link>
+            </div>
           </div>
 
           <button
@@ -122,6 +122,18 @@ function StoreLogin() {
           >
             Login
           </button>
+
+          <div className="flex flex-col items-center">
+            <p className="mt-4">
+              Don't have an account?{" "}
+              <Link
+                to="/Storeregstration1"
+                className="text-blue-500 hover:underline"
+              >
+                Sign Up
+              </Link>
+            </p>
+          </div>
         </form>
       </div>
     </div>

@@ -18,6 +18,7 @@ import Advertisment from "./pages/storepanel/Advertisment";
 import AddingProducts from "./pages/storepanel/AddingProducts";
 import Storefake from "./pages/storepanel/storefake";
 import Editproduct from "./pages/storepanel/Editproduct";
+import Forgetpassword from "./pages/ForgetPassword";
 
 // ProtectedRoute component
 function ProtectedRoute() {
@@ -41,6 +42,7 @@ function App() {
         <Routes>
           <Route path="/fake" element={<Storefake/>}></Route>
           <Route path="/" element={<Home />} />
+          <Route path="/forget-password" element={<Forgetpassword/>}></Route>
           <Route path="/Storelogin" element={store ? <Navigate to="/Adminpanel" /> : <StoreLogin />} />
 
           <Route path="/Storeregstration1" element={store ? <Navigate to="/Adminpanel" /> : <StoreRegistration1 />} />

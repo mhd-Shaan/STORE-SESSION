@@ -225,12 +225,12 @@ const dispatch = useDispatch();
         )}
 
         {/* Terms & Register Button */}
-        <div className="mt-4 text-center text-sm text-gray-500">
+        {/* <div className="mt-4 text-center text-sm text-gray-500">
           By continuing, I agree to the{" "}
           <a href="#" className="text-blue-500 underline">
             Terms of Use & Privacy Policy
           </a>.
-        </div>
+        </div> */}
 
         <button
           type="submit"
@@ -238,6 +238,14 @@ const dispatch = useDispatch();
         >
           Register & Continue
         </button>
+        <div className="flex flex-col items-center">
+        <p className="mt-4">
+        Already have an account?{" "}
+        <Link to="/Storelogin" className="text-blue-500 hover:underline">
+          Login
+        </Link>
+        </p>
+        </div>
       </form>
     </div>
   </div>
