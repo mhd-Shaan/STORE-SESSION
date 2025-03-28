@@ -136,16 +136,22 @@ export const StoreRegestration2 = async (req, res) => {
     if (!pannumber)
       return res.status(400).json({ error: "pannumber is required" });
 
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "No images uploaded" });
+    }
     const stores = await Tempstores.findOne({ email });
     if (!stores) {
       return res.status(404).json({ error: "stores not found" });
     }
+
+    const imageUrls = req.files.map((file) => file.path);
+
     const hashedPassword = await hashPassword(password);
 
     stores.fullName = fullName;
     stores.password = hashedPassword;
     stores.pannumber = pannumber;
-    
+    stores.documentImage=imageUrls
 
     await stores.save();
 

@@ -40,9 +40,9 @@ const storeSchema = new mongoose.Schema({
   storeDescription: {
     type: String,
   },
-  documentImage: {
+  documentImage: [{
     type: String, // Store image URL or file path
-  },
+  }],
   isBlocked: {
     type: Boolean,
     default: false, // Store is not blocked by default

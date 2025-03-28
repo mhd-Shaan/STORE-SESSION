@@ -3,14 +3,14 @@ import express from 'express';
 import {  CheckingOtp, FakeAuth, logoutStore, Otpsend, otpsending, StoreLogin, StoreRegestration1, StoreRegestration2, StoreRegestration3, updatePassword, verifyOTPforStore } from '../controllers/storeController.js';
 import { protectRouteStore } from '../middleware/authmiddleware.js';
 import { addProduct, blockunblockproduct, DeleteProduct, Editproduct, showProduct } from '../controllers/productController.js';
-import upload from '../config/multer.js';
+import  {upload, storeUpload } from '../config/multer.js';
 
 const router = express.Router();
 
 router.post("/register1",StoreRegestration1)
 router.post("/otp-verificaton",verifyOTPforStore)
 router.post("/otp-number",otpsending)
-router.post("/register2",StoreRegestration2)
+router.post("/register2",storeUpload.array('document',5),StoreRegestration2)
 router.post("/register3",StoreRegestration3)
 router.post('/loginstore',StoreLogin)
 router.get("/fakeauth",protectRouteStore,FakeAuth)
