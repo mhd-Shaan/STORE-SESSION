@@ -22,14 +22,13 @@ export const upload = multer({
 const storeStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => ({
-    folder: "store", // Store images in 'store' folder
+    folder: "store-documents", // Store images in 'store' folder
+    resource_type: "raw", // Important for PDF files
     format: file.mimetype.split("/")[1], // Auto-detect format
-    transformation: [{ width: 500, height: 500, crop: "limit" }], // Resize images
   }),
 });
 
 // Multer instance for store images (e.g., store logos, banners)
 export const storeUpload = multer({
   storage: storeStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size (5MB)
 });

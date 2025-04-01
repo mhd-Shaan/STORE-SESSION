@@ -35,7 +35,8 @@ export default function StoreRegistration2() {
       formData.append("password", data.password);
       formData.append("fullName", data.fullName);
       formData.append("pannumber", data.pannumber);
-      files.forEach((file) => formData.append("document", file));
+
+      files.forEach((file) => formData.append("files", file)); // Append selected PDF files
 
       await axios.post("http://localhost:5000/store/register2", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -74,12 +75,34 @@ export default function StoreRegistration2() {
 
         <form onSubmit={handleSubmit}>
           <div className="mt-6 space-y-4">
-            <Input type="password" placeholder="Create Password" className="w-full" onChange={(e) => setData({ ...data, password: e.target.value })} />
-            <Input type="text" placeholder="Enter Your Full Name" className="w-full" onChange={(e) => setData({ ...data, fullName: e.target.value })} />
-            <Input type="number" placeholder="Enter PanCardNumber" className="w-full" onChange={(e) => setData({ ...data, pannumber: e.target.value })} />
-            
-            <input type="file" multiple accept="image/*" onChange={handleFileChange} className="block w-full mt-2" />
-            
+            <Input
+              type="password"
+              placeholder="Create Password"
+              className="w-full"
+              onChange={(e) => setData({ ...data, password: e.target.value })}
+            />
+            <Input
+              type="text"
+              placeholder="Enter Your Full Name"
+              className="w-full"
+              onChange={(e) => setData({ ...data, fullName: e.target.value })}
+            />
+            <Input
+              type="number"
+              placeholder="Enter PanCardNumber"
+              className="w-full"
+              onChange={(e) => setData({ ...data, pannumber: e.target.value })}
+            />
+
+            {/* PDF File Upload */}
+            <input
+              type="file"
+              multiple
+              accept=".pdf" // Only PDF files
+              onChange={handleFileChange}
+              className="block w-full mt-2"
+            />
+
             {files.length > 0 && (
               <div className="mt-4 space-y-2">
                 {files.map((file, index) => (
@@ -95,7 +118,9 @@ export default function StoreRegistration2() {
           </div>
 
           <div className="mt-6 text-center">
-            <Button type="submit" className="w-full bg-blue-600 text-white hover:bg-blue-700">Continue →</Button>
+            <Button type="submit" className="w-full bg-blue-600 text-white hover:bg-blue-700">
+              Continue →
+            </Button>
           </div>
         </form>
       </div>

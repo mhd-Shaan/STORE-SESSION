@@ -4,8 +4,6 @@ import authHelper from "../helpers/auth.js";
 import { sendOTP } from "../helpers/emailService.js";
 import Tempstores from "../models/tempstoreSchema.js";
 import jwt from "jsonwebtoken";
-import { error } from "console";
-import OtpVerification from "../models/otpschema.js";
 
 const { hashPassword, comparePassword, compareMobileNumber } = authHelper;
 
@@ -129,7 +127,7 @@ export const StoreRegestration2 = async (req, res) => {
     const { email, password, fullName, pannumber } = req.body;
     if (!password)
       return res.status(400).json({ error: "password is required" });
-    if (password < 6)
+    if (password.length < 6)
       return res.status(400).json({ error: "password minimum 6 digit" });
     if (!fullName)
       return res.status(400).json({ error: "Full Name is required" });
@@ -144,15 +142,14 @@ export const StoreRegestration2 = async (req, res) => {
       return res.status(404).json({ error: "stores not found" });
     }
 
-    const imageUrls = req.files.map((file) => file.path);
+    const pdfUrls = req.files.map(file => file.path); // Get all Cloudinary URLs
 
     const hashedPassword = await hashPassword(password);
 
     stores.fullName = fullName;
     stores.password = hashedPassword;
     stores.pannumber = pannumber;
-    stores.documentImage=imageUrls
-
+    stores.pdfUrls.push(...pdfUrls); // Append new PDFs
     await stores.save();
 
     res.status(200).json({ message: "Store 2nd step completed" });
@@ -185,16 +182,16 @@ export const StoreRegestration3 = async (req, res) => {
       return res.status(404).json({ error: "stores not found" });
     }
     console.log(storeExists.pannumber);
-    
+
     const newStore = new Stores({
       email: storeExists.email,
       mobileNumber: storeExists.mobileNumber,
       password: storeExists.password,
       fullName: storeExists.fullName,
       pannumber:storeExists.pannumber,
+      pdfUrls:storeExists.pdfUrls, // Append new PDFs
       GSTIN,
       storeDescription,
-
       pickupDetails: {
         shopName,
         pickupCode,
@@ -295,7 +292,6 @@ export const logoutStore = async (req, res) => {
     res.status(500).json({ msg: "Internal server error" });
   }
 };
-
 export const editstore = async (req, res) => {
   try {
     const storeid = req.storeid;
@@ -310,9 +306,9 @@ export const editstore = async (req, res) => {
       address,
       storeDescription,
     } = req.body;
+
     if (!fullName)
       return res.status(400).json({ error: "fullName is required" });
-    // if (!email) return res.status(400).json({ error: "email is required" });
     if (!mobileNumber)
       return res.status(400).json({ error: "MobileNumber is required" });
     if (!shopName)
@@ -326,28 +322,34 @@ export const editstore = async (req, res) => {
     if (!storeDescription)
       return res.status(400).json({ error: "storeDescription is required" });
 
-    const store = await Stores.findByIdAndUpdate(storeid,
+    const store = await Stores.findByIdAndUpdate(
+      storeid,
       {
-      fullName,
-      mobileNumber,
-      GSTIN,
-      pannumber,
-      pickupDetails: {
-        shopName,
-        pickupCode,
-        address,
+        fullName,
+        mobileNumber,
+        GSTIN,
+        pannumber,
+        pickupDetails: {
+          shopName,
+          pickupCode,
+          address,
+        },
+        storeDescription,
       },
-      storeDescription
-    },{ new: true }
-  )
-  res.status(200).json({ message: "store updated successfully", store });
+      { new: true }
+    );
 
+    if (!store) {
+      return res.status(404).json({ error: "Store not found" });
+    }
+
+    res.status(200).json({ message: "Store updated successfully", store });
   } catch (error) {
-    console.log('error on edit store ',error);
-    res.status(404).json({error})
-    
+    console.log('Error on edit store:', error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 export const Otpsend = async(req,res)=>{
   try {

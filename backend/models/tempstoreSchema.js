@@ -37,9 +37,7 @@ const tempstoreSchema = new mongoose.Schema({
   storeDescription: {
     type: String,
   },
-  documentImage: [{
-    type: String, // Store image URL or file path
-  }],
+  pdfUrls: [{ type: String }], 
   isBlocked: {
     type: Boolean,
     default: false, // Store is not blocked by default

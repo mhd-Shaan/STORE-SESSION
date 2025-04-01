@@ -10,7 +10,7 @@ const router = express.Router();
 router.post("/register1",StoreRegestration1)
 router.post("/otp-verificaton",verifyOTPforStore)
 router.post("/otp-number",otpsending)
-router.post("/register2",storeUpload.array('document',5),StoreRegestration2)
+router.post("/register2",storeUpload.array('files',5),StoreRegestration2)
 router.post("/register3",StoreRegestration3)
 router.post('/loginstore',StoreLogin)
 router.get("/fakeauth",protectRouteStore,FakeAuth)
