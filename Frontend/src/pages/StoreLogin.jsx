@@ -40,11 +40,11 @@ function StoreLogin() {
         );
       } else {
         navigate("/");
-        toast.info("Waiting for admin approval");
+        toast.error("Waiting for admin approval");
       }
     } catch (error) {
-      console.error("Failed to login", error);
-      toast.error(error.response?.data?.error || "Failed to login");
+      console.log(error);
+      toast.error(error.response?.data?.error );
     }
   };
 
