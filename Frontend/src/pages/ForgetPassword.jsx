@@ -130,7 +130,7 @@ const Forgetpassword = ({ email: initialEmail, onComplete }) => {
     setLoading(true);
     setError("");
     try {
-      await axios.post("http://localhost:5000/store/forget-password", {
+      await axios.put("http://localhost:5000/store/forget-password", {
         email,
         password,
         confirmPassword,

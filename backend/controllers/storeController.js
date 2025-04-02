@@ -4,6 +4,7 @@ import authHelper from "../helpers/auth.js";
 import { sendOTP } from "../helpers/emailService.js";
 import Tempstores from "../models/tempstoreSchema.js";
 import jwt from "jsonwebtoken";
+import OtpVerification from "../models/otpschema.js";
 
 const { hashPassword, comparePassword, compareMobileNumber } = authHelper;
 
@@ -297,13 +298,11 @@ export const editstore = async (req, res) => {
     const storeid = req.storeid;
     const {
       email,
+      pickupDetails: { shopName, pickupCode, address },
       mobileNumber,
       fullName,
       pannumber,
       GSTIN,
-      shopName,
-      pickupCode,
-      address,
       storeDescription,
     } = req.body;
 
