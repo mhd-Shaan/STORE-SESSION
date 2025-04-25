@@ -1,163 +1,355 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { TextField, Button, Paper, Box, MenuItem, IconButton } from "@mui/material";
-import { Delete } from "@mui/icons-material";
+import { 
+  TextField, 
+  Button, 
+  Paper, 
+  Box, 
+  IconButton,
+  Typography,
+  InputAdornment
+} from "@mui/material";
+import { Delete, CloudUpload } from "@mui/icons-material";
 import toast from "react-hot-toast";
+import { styled } from "@mui/material/styles";
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
 
 export default function EditProduct() {
   const location = useLocation();
   const navigate = useNavigate();
   const selectedProduct = location.state?.product;
 
-  // Initialize state with selected product or empty values
-  const [product, setProduct] = useState(selectedProduct || {
-    vehicleType: "",
+  const [product, setProduct] = useState({
     vehicleBrand: "",
     vehicleModel: "",
-    partType: "",
-    spareBrand: "",
     productId: "",
     productName: "",
     price: "",
+    mrp: "",
     stockQuantity: "",
+    warranty: "",
+    features: "",
     description: "",
-    images: [],
   });
 
-  // Track existing and new images separately
-  const [existingImages, setExistingImages] = useState(selectedProduct?.images || []);
+  const [existingImages, setExistingImages] = useState([]);
   const [newImages, setNewImages] = useState([]);
-  const [deletedImages, setDeletedImages] = useState([]); // Track deleted images
+  const [deletedImages, setDeletedImages] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (selectedProduct) {
-      setProduct(selectedProduct);
+      setProduct({
+        vehicleBrand: selectedProduct.vehicleBrand || "",
+        vehicleModel: selectedProduct.vehicleModel || "",
+        productId: selectedProduct.productId || "",
+        productName: selectedProduct.productName || "",
+        price: selectedProduct.price || "",
+        mrp: selectedProduct.mrp || "",
+        stockQuantity: selectedProduct.stockQuantity || "",
+        warranty: selectedProduct.warranty || "",
+        features: selectedProduct.features || "",
+        description: selectedProduct.description || "",
+      });
       setExistingImages(selectedProduct.images || []);
     }
   }, [selectedProduct]);
 
-  // Handle text field changes
-  const handleChange = (e) => {
-    setProduct({ ...product, [e.target.name]: e.target.value });
+  const validateForm = () => {
+    const newErrors = {};
+    if (!product.productName) newErrors.productName = "Product name is required";
+    if (!product.price || isNaN(product.price)) newErrors.price = "Valid price is required";
+    if (!product.stockQuantity || isNaN(product.stockQuantity)) newErrors.stockQuantity = "Valid stock quantity is required";
+    
+    // Validate at least 1 image exists
+    const totalImages = existingImages.length - deletedImages.length + newImages.length;
+    if (totalImages < 1) newErrors.images = "At least 1 image is required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  // Handle new image selection (max 5 total)
-  const handleImageChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    const totalImages = existingImages.length + newImages.length + selectedFiles.length - deletedImages.length;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setProduct(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: undefined }));
+  };
 
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    const totalImages = existingImages.length - deletedImages.length + newImages.length + files.length;
+    
     if (totalImages > 5) {
-      toast.error("You can only upload up to 5 images.");
+      toast.error("Maximum 5 images allowed");
       return;
     }
-
-    setNewImages([...newImages, ...selectedFiles]);
+    
+    setNewImages(prev => [...prev, ...files]);
+    if (errors.images) setErrors(prev => ({ ...prev, images: undefined }));
   };
 
-  // Handle delete existing image
-  const handleDeleteExistingImage = (index) => {
-    const imageToDelete = existingImages[index];
-    setDeletedImages([...deletedImages, imageToDelete]); // Store deleted image
-    setExistingImages(existingImages.filter((_, i) => i !== index)); // Remove from UI
+  const handleDeleteImage = (type, index) => {
+    if (type === 'existing') {
+      const imageToDelete = existingImages[index];
+      setDeletedImages(prev => [...prev, imageToDelete]);
+      setExistingImages(prev => prev.filter((_, i) => i !== index));
+    } else {
+      setNewImages(prev => prev.filter((_, i) => i !== index));
+    }
   };
 
-  // Handle delete new image
-  const handleDeleteNewImage = (index) => {
-    setNewImages(newImages.filter((_, i) => i !== index));
-  };
-
-  // Handle product update
-  const handleUpdate = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
     const formData = new FormData();
 
     // Append product data
-    Object.keys(product).forEach((key) => {
-      formData.append(key, product[key]);
+    Object.entries(product).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, value);
+      }
     });
 
-    // Append remaining existing images (not deleted ones)
+    // Append image data
     formData.append("existingImages", JSON.stringify(existingImages));
-
-    // Append new images
-    newImages.forEach((file) => {
-      formData.append("images", file);
-    });
-
-    // Append deleted images
     formData.append("deletedImages", JSON.stringify(deletedImages));
+    newImages.forEach(file => formData.append("images", file));
 
     try {
-      await axios.put(`http://localhost:5000/store/editproduct/${product._id}`, formData, {
+      await axios.put(`http://localhost:5000/store/editproduct/${selectedProduct._id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true,
       });
-
       toast.success("Product updated successfully!");
       navigate("/product-managment");
     } catch (error) {
-      console.error(error);
-      toast.error("Error updating product");
+      console.error("Update error:", error);
+      toast.error(error.response?.data?.error || "Error updating product");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const totalImages = existingImages.length - deletedImages.length + newImages.length;
+
   return (
-    <Box sx={{ p: 3, maxWidth: 600, mx: "auto" }}>
+    <Box sx={{ p: 3, maxWidth: 800, mx: "auto" }}>
       <Paper sx={{ p: 3, borderRadius: 2 }}>
-        <h2 className="text-xl font-semibold mb-4">Edit Product</h2>
-        <form onSubmit={handleUpdate}>
-          <TextField label="Product Name" name="productName" value={product.productName} onChange={handleChange} fullWidth sx={{ mb: 2 }} />
-          <TextField label="Price" name="price" type="number" value={product.price} onChange={handleChange} fullWidth sx={{ mb: 2 }} />
-          <TextField label="Stock Quantity" name="stockQuantity" type="number" value={product.stockQuantity} onChange={handleChange} fullWidth sx={{ mb: 2 }} />
-          <TextField label="Description" name="description" value={product.description} onChange={handleChange} fullWidth multiline rows={3} sx={{ mb: 2 }} />
+        <Typography variant="h5" gutterBottom>
+          Edit Product
+        </Typography>
 
-          <TextField label="Vehicle Type" name="vehicleType" value={product.vehicleType} onChange={handleChange} fullWidth select sx={{ mb: 2 }}>
-            <MenuItem value="2-Wheeler">2-Wheeler</MenuItem>
-            <MenuItem value="4-Wheeler">4-Wheeler</MenuItem>
-          </TextField>
+        <form onSubmit={handleSubmit}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
+            <TextField
+              label="Product Name *"
+              name="productName"
+              value={product.productName}
+              onChange={handleChange}
+              error={!!errors.productName}
+              helperText={errors.productName}
+              fullWidth
+            />
 
-          <TextField label="Vehicle Brand" name="vehicleBrand" value={product.vehicleBrand} onChange={handleChange} fullWidth sx={{ mb: 2 }} />
-          <TextField label="Part Type" name="partType" value={product.partType} onChange={handleChange} fullWidth sx={{ mb: 2 }} />
-          <TextField label="Spare Brand" name="spareBrand" value={product.spareBrand} onChange={handleChange} fullWidth sx={{ mb: 2 }} />
+            <TextField
+              label="Product ID"
+              name="productId"
+              value={product.productId}
+              onChange={handleChange}
+              fullWidth
+            />
 
-          {/* Image Preview Section (Single Row) */}
-          <div className="mb-4">
-            <p className="text-sm font-semibold mb-2">Product Images</p>
-            <div className="flex flex-wrap gap-2">
-              {/* Display Existing Images */}
+            <TextField
+              label="Price *"
+              name="price"
+              type="number"
+              value={product.price}
+              onChange={handleChange}
+              error={!!errors.price}
+              helperText={errors.price}
+              fullWidth
+              InputProps={{
+                startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+              }}
+            />
+
+            <TextField
+              label="MRP"
+              name="mrp"
+              type="number"
+              value={product.mrp}
+              onChange={handleChange}
+              fullWidth
+              InputProps={{
+                startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+              }}
+            />
+
+            <TextField
+              label="Stock Quantity *"
+              name="stockQuantity"
+              type="number"
+              value={product.stockQuantity}
+              onChange={handleChange}
+              error={!!errors.stockQuantity}
+              helperText={errors.stockQuantity}
+              fullWidth
+            />
+
+            <TextField
+              label="Warranty"
+              name="warranty"
+              value={product.warranty}
+              onChange={handleChange}
+              fullWidth
+            />
+
+            <TextField
+              label="Vehicle Brand"
+              name="vehicleBrand"
+              value={product.vehicleBrand}
+              onChange={handleChange}
+              fullWidth
+            />
+
+            <TextField
+              label="Vehicle Model"
+              name="vehicleModel"
+              value={product.vehicleModel}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Box>
+
+          <TextField
+            label="Description"
+            name="description"
+            value={product.description}
+            onChange={handleChange}
+            fullWidth
+            multiline
+            rows={4}
+            sx={{ mb: 3 }}
+          />
+
+          <TextField
+            label="Features"
+            name="features"
+            value={product.features}
+            onChange={handleChange}
+            fullWidth
+            multiline
+            rows={2}
+            sx={{ mb: 3 }}
+          />
+
+          {/* Image Upload Section */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Product Images (1-5 required)
+              {errors.images && (
+                <Typography color="error" variant="caption" display="block">
+                  {errors.images}
+                </Typography>
+              )}
+            </Typography>
+            
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
               {existingImages.map((img, index) => (
-                <div key={`existing-${index}`} className="relative">
-                  <img src={img} alt="Existing" className="w-16 h-16 rounded border" />
-                  <IconButton 
-                    size="small" 
-                    onClick={() => handleDeleteExistingImage(index)} 
-                    sx={{ position: "absolute", top: -5, right: -5 }}>
-                    <Delete fontSize="small" color="error" />
+                <Box key={`existing-${index}`} sx={{ position: 'relative' }}>
+                  <img 
+                    src={img} 
+                    alt={`Product ${index}`} 
+                    style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4 }} 
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={() => handleDeleteImage('existing', index)}
+                    sx={{ 
+                      position: 'absolute', 
+                      top: -8, 
+                      right: -8, 
+                      backgroundColor: 'error.main',
+                      color: 'white',
+                      '&:hover': { backgroundColor: 'error.dark' }
+                    }}
+                  >
+                    <Delete fontSize="small" />
                   </IconButton>
-                </div>
+                </Box>
               ))}
 
-              {/* Display New Images */}
               {newImages.map((file, index) => (
-                <div key={`new-${index}`} className="relative">
-                  <img src={URL.createObjectURL(file)} alt="New" className="w-16 h-16 rounded border" />
-                  <IconButton 
-                    size="small" 
-                    onClick={() => handleDeleteNewImage(index)} 
-                    sx={{ position: "absolute", top: -5, right: -5 }}>
-                    <Delete fontSize="small" color="error" />
+                <Box key={`new-${index}`} sx={{ position: 'relative' }}>
+                  <img 
+                    src={URL.createObjectURL(file)} 
+                    alt={`New ${index}`} 
+                    style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4 }} 
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={() => handleDeleteImage('new', index)}
+                    sx={{ 
+                      position: 'absolute', 
+                      top: -8, 
+                      right: -8, 
+                      backgroundColor: 'error.main',
+                      color: 'white',
+                      '&:hover': { backgroundColor: 'error.dark' }
+                    }}
+                  >
+                    <Delete fontSize="small" />
                   </IconButton>
-                </div>
+                </Box>
               ))}
-            </div>
-          </div>
+            </Box>
 
-          {/* File Input for Adding New Images */}
-          <input type="file" multiple onChange={handleImageChange} className="mb-4" disabled={existingImages.length + newImages.length >= 5} />
+            <Button
+              component="label"
+              variant="outlined"
+              startIcon={<CloudUpload />}
+              disabled={totalImages >= 5}
+            >
+              Upload Images
+              <VisuallyHiddenInput 
+                type="file" 
+                multiple 
+                accept="image/*"
+                onChange={handleImageChange} 
+              />
+            </Button>
+            <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
+              {Math.max(0, 5 - totalImages)} images remaining (minimum 1 required)
+            </Typography>
+          </Box>
 
-          <Button variant="contained" color="primary" type="submit">
-            Update Product
-          </Button>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+            <Button variant="outlined" onClick={() => navigate(-1)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="contained" 
+              type="submit"
+              disabled={isSubmitting || totalImages < 1}
+            >
+              {isSubmitting ? "Updating..." : "Update Product"}
+            </Button>
+          </Box>
         </form>
       </Paper>
     </Box>

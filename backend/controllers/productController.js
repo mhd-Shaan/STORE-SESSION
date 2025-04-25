@@ -1,4 +1,7 @@
+import Brands from "../models/BrandSchema.js";
+import Category from "../models/CatgoerySchema.js";
 import Product from "../models/productSchema.js";
+import SubCategory from "../models/SubCatgoerySchema.js";
 
 export const addProduct = async (req, res) => {
   try {
@@ -8,72 +11,74 @@ export const addProduct = async (req, res) => {
       vehicleType,
       vehicleBrand,
       vehicleModel,
-      partType,
-      spareBrand,
+      category,
+      subcategory,
+      brandType,
+      brand,
       productId,
       productName,
-      price,
-      stockQuantity,
       description,
+      price,
+      mrp,
+      discount,
+      stock,
+      warranty,
+      features,
     } = req.body;
 
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: "No images uploaded" });
     }
 
-    if (!vehicleType)
-      return res.status(400).json({ error: "Vehicle type is required" });
-    if (!vehicleBrand)
-      return res.status(400).json({ error: "Vehicle brand is required" });
-    if (!vehicleModel)
-      return res.status(400).json({ error: "Vehicle model is required" });
-    if (!partType)
-      return res.status(400).json({ error: "Part type is required" });
-    if (!spareBrand)
-      return res.status(400).json({ error: "Spare brand is required" });
-    if (!productId)
-      return res.status(400).json({ error: "Product ID is required" });
-    if (!productName)
-      return res.status(400).json({ error: "Product name is required" });
-    if (!price || isNaN(price))
-      return res.status(400).json({ error: "Valid price is required" });
-    if (!stockQuantity || isNaN(stockQuantity))
-      return res
-        .status(400)
-        .json({ error: "Valid stock quantity is required" });
+    // Field Validations
+    if (!vehicleType) return res.status(400).json({ error: "Vehicle type is required" });
+    if (!vehicleBrand) return res.status(400).json({ error: "Vehicle brand is required" });
+    if (!vehicleModel) return res.status(400).json({ error: "Vehicle model is required" });
+    if (!category) return res.status(400).json({ error: "Category is required" });
+    if (!subcategory) return res.status(400).json({ error: "Subcategory is required" });
+    if (!brandType) return res.status(400).json({ error: "Brand type is required" });
+    if (!brand) return res.status(400).json({ error: "Brand is required" });
+    if (!productId) return res.status(400).json({ error: "Product ID is required" });
+    if (!productName) return res.status(400).json({ error: "Product name is required" });
+    if (!price || isNaN(price)) return res.status(400).json({ error: "Valid price is required" });
+    if (!mrp || isNaN(mrp)) return res.status(400).json({ error: "Valid MRP is required" });
+    if (discount && isNaN(discount)) return res.status(400).json({ error: "Discount must be a number" });
+    if (!stock || isNaN(stock)) return res.status(400).json({ error: "Valid stock quantity is required" });
 
     const imageUrls = req.files.map((file) => file.path);
-
-    // const existingproduct = await Product.findOne({ storeid, productName });
-    // if (existingproduct) {
-    //   return res.status(400).json({ error: "This product name is already taken" }); // ✅ Stops execution
-    // }
 
     const newProduct = new Product({
       storeid,
       vehicleType,
       vehicleBrand,
       vehicleModel,
-      partType,
-      spareBrand,
+      category,
+      subcategory,
+      brandType,
+      brand,
       productId,
       productName,
       description,
       price: Number(price),
-      stockQuantity: Number(stockQuantity),
-      images: imageUrls, // Store image URLs
+      mrp: Number(mrp),
+      discount: discount ? Number(discount) : 0,
+      stockQuantity: Number(stock),
+      warranty: warranty || "",
+      features: features || "",
+      images: imageUrls,
     });
 
     await newProduct.save();
 
     return res
       .status(201)
-      .json({ message: "Product added successfully", product: newProduct }); // ✅ Single response
+      .json({ message: "Product added successfully", product: newProduct });
   } catch (error) {
     console.error("Error adding product:", error);
-    return res.status(500).json(error); // ✅ Single response
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 export const showProduct = async (req, res) => {
   try {
@@ -130,23 +135,20 @@ export const Editproduct = async (req, res) => {
       spareBrand,
       productId,
       productName,
-      price,
-      stockQuantity,
       description,
+      price,
+      mrp,
+      stockQuantity,
+      warranty,
+      features,
       existingImages, // JSON string of existing images from frontend
       deletedImages,  // JSON string of deleted images from frontend
     } = req.body;
 
-    // Input Validations
-    if (!vehicleType) return res.status(400).json({ error: "Vehicle type is required" });
-    if (!vehicleBrand) return res.status(400).json({ error: "Vehicle brand is required" });
-    if (!vehicleModel) return res.status(400).json({ error: "Vehicle model is required" });
-    if (!partType) return res.status(400).json({ error: "Part type is required" });
-    if (!spareBrand) return res.status(400).json({ error: "Spare brand is required" });
-    if (!productId) return res.status(400).json({ error: "Product ID is required" });
+    // Input Validations for required fields
     if (!productName) return res.status(400).json({ error: "Product name is required" });
-    if (!price || isNaN(price)) return res.status(400).json({ error: "Valid price is required" });
-    if (!stockQuantity || isNaN(stockQuantity)) return res.status(400).json({ error: "Valid stock quantity is required" });
+    if (price && isNaN(price)) return res.status(400).json({ error: "Valid price is required" });
+    if (stockQuantity && isNaN(stockQuantity)) return res.status(400).json({ error: "Valid stock quantity is required" });
 
     // Fetch existing product
     const product = await Product.findById(Productid);
@@ -154,33 +156,41 @@ export const Editproduct = async (req, res) => {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    // Parse JSON strings
-    let updatedImages = JSON.parse(existingImages || "[]");
-    const deletedImagesArray = JSON.parse(deletedImages || "[]");
+    // Create update object with only provided fields
+    const updateData = {};
+    
+    if (vehicleType !== undefined) updateData.vehicleType = vehicleType;
+    if (vehicleBrand !== undefined) updateData.vehicleBrand = vehicleBrand;
+    if (vehicleModel !== undefined) updateData.vehicleModel = vehicleModel;
+    if (partType !== undefined) updateData.partType = partType;
+    if (spareBrand !== undefined) updateData.spareBrand = spareBrand;
+    if (productId !== undefined) updateData.productId = productId;
+    if (productName !== undefined) updateData.productName = productName;
+    if (description !== undefined) updateData.description = description;
+    if (price !== undefined) updateData.price = price;
+    if (mrp !== undefined) updateData.mrp = mrp;
+    if (stockQuantity !== undefined) updateData.stockQuantity = stockQuantity;
+    if (warranty !== undefined) updateData.warranty = warranty;
+    if (features !== undefined) updateData.features = features;
 
-    // Remove deleted images
-    updatedImages = updatedImages.filter(img => !deletedImagesArray.includes(img));
+    // Handle images only if they are being updated
+    if (existingImages !== undefined || deletedImages !== undefined || req.files?.length) {
+      // Parse JSON strings
+      let updatedImages = existingImages ? JSON.parse(existingImages) : [...product.images];
+      const deletedImagesArray = deletedImages ? JSON.parse(deletedImages) : [];
 
-    // Add newly uploaded images
-    const newImageUrls = req.files.map((file) => file.path);
-    updatedImages = [...updatedImages, ...newImageUrls];
+      // Remove deleted images
+      updatedImages = updatedImages.filter(img => !deletedImagesArray.includes(img));
 
-    // Update product
+      // Add newly uploaded images
+      const newImageUrls = req.files?.map((file) => file.path) || [];
+      updateData.images = [...updatedImages, ...newImageUrls];
+    }
+
+    // Update product with only the provided fields
     const updatedProduct = await Product.findByIdAndUpdate(
       Productid,
-      {
-        vehicleType,
-        vehicleBrand,
-        vehicleModel,
-        partType,
-        spareBrand,
-        stockQuantity,
-        productId,
-        productName,
-        description,
-        price,
-        images: updatedImages, // Store final image list
-      },
+      updateData,
       { new: true }
     );
 
@@ -230,3 +240,65 @@ export const blockunblockproduct = async(req,res)=>{
     res.status(500).json({error});
   }
 }
+
+
+
+export const categoryshow = async (req, res) => {
+  try {
+    const category = await Category.find({ isBlocked: false });
+    res.status(200).json({ category });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "error on fetching products" });
+  }
+};
+
+export const brandsshow = async (req, res) => {
+  try {
+    // Check and parse limit from query params
+    const oeslimit = req.query.oesLimit ? parseInt(req.query.oesLimit) : null;
+    const oemlimit = req.query.oemLimit ? parseInt(req.query.oemLimit) : null;
+    
+    
+
+  
+
+    // Create base queries
+    const oemQuery = Brands.find({ isBlocked: false, type: 'OEM' }).limit(Number(oemlimit));
+
+    const oesQuery = Brands.find({ isBlocked: false, type: 'OES' }).limit(Number(oeslimit));
+  
+
+    const [oemBrands, oesBrands] = await Promise.all([
+      oemQuery,
+      oesQuery,
+    ]);
+
+
+    // Send response
+    res.status(200).json({
+      oem: oemBrands,
+      oes: oesBrands,
+    });
+  } catch (error) {
+    console.error("Error fetching brands:", error);
+    res.status(500).json({ error: "Error fetching brands" });
+  }
+};
+
+export const SubCategoryShow = async (req, res) => {
+  try {
+    const SubCategoryId = req.query.id;
+    
+
+    const SubCategorydetails = await SubCategory.find({ CategoryId: SubCategoryId });
+     
+    return res.status(200).json({
+      subCategories: SubCategorydetails,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
