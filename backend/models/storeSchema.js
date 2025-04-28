@@ -26,6 +26,9 @@ const storeSchema = new mongoose.Schema({
   pannumber: {
     type: String,
   },
+  city:{
+    type:String
+  },
   pickupDetails: {
     shopName:{
       type:String,

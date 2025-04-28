@@ -1,12 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import {
-  EnvelopeIcon,
-  PencilIcon,
-  FingerPrintIcon,
-} from "@heroicons/react/24/solid";
+import { EnvelopeIcon } from "@heroicons/react/24/solid";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
@@ -18,22 +14,45 @@ export default function StoreRegistration3() {
     storeDescription: "",
     pickupCode: "",
     address: "",
+    city: "",
   });
+  const [cities, setCities] = useState([]);
+  const [loadingCities, setLoadingCities] = useState(false);
+
   const location = useLocation();
   const email = location.state?.email || "";
   const navigate = useNavigate();
+
+  // Fetch cities from backend
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        setLoadingCities(true);
+        const response = await axios.get('http://localhost:5000/store/showcities'); 
+        setCities(response.data.citys || []);
+      } catch (error) {
+        console.error("Error fetching cities:", error);
+        toast.error("Failed to load cities");
+      } finally {
+        setLoadingCities(false);
+      }
+    };
+
+    fetchCities();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`http://localhost:5000/store/register3`, {
-        ...data, // Existing form data
-        email, // Adding email
+      await axios.post(`http://localhost:5000/store/register3`, {
+        ...data,
+        email,
       });
-      toast.success("regestration completed");
+      toast.success("Registration completed");
       navigate("/Storelogin");
     } catch (error) {
       console.error("Error during step3:", error);
-      toast.error(error.response?.data?.error || "failed to step 3");
+      toast.error(error.response?.data?.error || "Failed to complete step 3");
     }
   };
 
@@ -46,7 +65,7 @@ export default function StoreRegistration3() {
             EMAIL ID & GST — PASSWORD CREATION — ONBOARDING DASHBOARD
           </p>
           <h2 className="text-2xl font-semibold text-gray-700 mt-2">Hello</h2>
-          <p className="text-gray-600"> Verification</p>
+          <p className="text-gray-600">Verification</p>
         </div>
 
         {/* Contact Info */}
@@ -57,14 +76,16 @@ export default function StoreRegistration3() {
           </div>
         </div>
 
-        {/* GSTIN Input */}
+        {/* Form */}
         <form onSubmit={handleSubmit}>
+          {/* GSTIN Input */}
           <div className="mt-4">
             <label className="text-sm font-medium text-gray-700">
               Enter GSTIN
             </label>
             <Input
               type="text"
+              value={data.GSTIN}
               onChange={(e) => setData({ ...data, GSTIN: e.target.value })}
               placeholder="Enter GSTIN"
               className="mt-1"
@@ -74,45 +95,58 @@ export default function StoreRegistration3() {
             </p>
           </div>
 
-          {/* Signature Section */}
-          {/* <div className="mt-4">
-                    <p className="text-sm font-medium text-gray-700">Add Your e-Signature</p>
-                    <div className="flex flex-col md:flex-row md:items-center md:space-x-4 mt-2 gap-2">
-                        <Button className="flex items-center space-x-2 bg-blue-500 hover:bg-blue-600 w-full md:w-auto">
-                            <PencilIcon className="h-5 w-5 text-white" />
-                            <span>Draw your Signature</span>
-                        </Button>
-                        <span className="text-gray-500 hidden md:inline">OR</span>
-                        <Button className="flex items-center space-x-2 bg-blue-500 hover:bg-blue-600 w-full md:w-auto">
-                            <FingerPrintIcon className="h-5 w-5 text-white" />
-                            <span>Choose your Signature</span>
-                        </Button>
-                    </div>
-                </div> */}
-
           {/* Store & Pickup Details */}
           <div className="mt-6 space-y-3">
             <p className="text-sm font-medium text-gray-700">
-              Store & Pickup Det
+              Store & Pickup Details
             </p>
+
             <Input
+              value={data.shopName}
               onChange={(e) => setData({ ...data, shopName: e.target.value })}
               type="text"
               placeholder="Enter Shop Name"
             />
+
             <Input
+              value={data.address}
               onChange={(e) => setData({ ...data, address: e.target.value })}
               type="text"
               placeholder="Enter Address"
             />
+
+            {/* City Dropdown */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">City</label>
+              <select
+                value={data.city}
+                onChange={(e) => setData({ ...data, city: e.target.value })}
+                className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={loadingCities}
+              >
+                <option value="">Select a city</option>
+                {cities.map((city) => (
+                  <option key={city._id} value={city.city}>
+                    {city.city}
+                  </option>
+                ))}
+              </select>
+              {loadingCities && (
+                <p className="text-xs text-gray-500">Loading cities...</p>
+              )}
+            </div>
+
             <Input
+              value={data.storeDescription}
               onChange={(e) =>
                 setData({ ...data, storeDescription: e.target.value })
               }
               type="text"
               placeholder="Enter Store Description"
             />
+
             <Input
+              value={data.pickupCode}
               onChange={(e) => setData({ ...data, pickupCode: e.target.value })}
               type="text"
               placeholder="Enter Pickup Pincode"

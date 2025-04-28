@@ -1,6 +1,6 @@
 import express from 'express';
 // import {protectRouteuser} from '../middleware/authmiddleware.js'
-import {  CheckingOtp, editstore, FakeAuth, logoutStore, Otpsend, otpsending, StoreLogin, StoreRegestration1, StoreRegestration2, StoreRegestration3, updatePassword, verifyOTPforStore } from '../controllers/storeController.js';
+import {  CheckingOtp, editstore, FakeAuth, logoutStore, Otpsend, otpsending, showcity, StoreLogin, StoreRegestration1, StoreRegestration2, StoreRegestration3, updatePassword, verifyOTPforStore } from '../controllers/storeController.js';
 import { protectRouteStore } from '../middleware/authmiddleware.js';
 import { addProduct, blockunblockproduct, brandsshow, categoryshow, DeleteProduct, Editproduct, showProduct, SubCategoryShow } from '../controllers/productController.js';
 import  {upload, storeUpload } from '../config/multer.js';
@@ -27,5 +27,6 @@ router.put('/forget-password',updatePassword)
 router.get('/showcatgoery',protectRouteStore,categoryshow)
 router.get('/showsubcatgoery',protectRouteStore,SubCategoryShow)
 router.get('/showbrands',protectRouteStore,brandsshow)
+router.get('/showcities',showcity)
 
 export default router;

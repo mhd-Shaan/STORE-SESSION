@@ -5,6 +5,7 @@ import { sendOTP } from "../helpers/emailService.js";
 import Tempstores from "../models/tempstoreSchema.js";
 import jwt from "jsonwebtoken";
 import OtpVerification from "../models/otpschema.js";
+import Location from "../models/LocationSchema.js";
 
 const { hashPassword, comparePassword, compareMobileNumber } = authHelper;
 
@@ -164,7 +165,7 @@ export const StoreRegestration3 = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { email, GSTIN, shopName, pickupCode, address, storeDescription } =
+    const { email, GSTIN, shopName, pickupCode, address, storeDescription,city } =
       req.body;
     if (!email) return res.status(400).json({ error: "email is required" });
     if (!GSTIN) return res.status(400).json({ error: "GSTIN is required" });
@@ -175,20 +176,21 @@ export const StoreRegestration3 = async (req, res) => {
       return res.status(400).json({ error: "storedescrption is required" });
     if (!pickupCode)
       return res.status(400).json({ error: "pickup code is required" });
-    const gst = await Tempstores.findOne({ GSTIN });
+    const gst = await store.findOne({ GSTIN });
     if (gst)
       return res.status(400).json({ error: "this gst is already exist" });
     const storeExists = await Tempstores.findOne({ email });
     if (!storeExists) {
       return res.status(404).json({ error: "stores not found" });
     }
-    console.log(storeExists.pannumber);
+    if(!city) return res.status(404).json({error:"city is required"})
 
     const newStore = new Stores({
       email: storeExists.email,
       mobileNumber: storeExists.mobileNumber,
       password: storeExists.password,
       fullName: storeExists.fullName,
+      city,
       pannumber:storeExists.pannumber,
       pdfUrls:storeExists.pdfUrls, // Append new PDFs
       GSTIN,
@@ -434,7 +436,18 @@ export const updatePassword = async (req, res) => {
     return res.status(200).json({ message: "Password updated successfully" });
 
   } catch (error) {
-    console.error("Error updating password:", error);
+    console.log("Error updating password:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+
+export const showcity = async(req,res)=>{
+  try {
+    const citys = await Location.find({isActive:true})
+  return res.status(200).json({citys})
+  } catch (error) {
+    console.log("Error updating password:", error);
+    return res.status(500).json({ error});
+  }
+}
