@@ -1,3 +1,5 @@
+
+
 import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema(
@@ -19,8 +21,8 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
     category: {
-      type: String,
-      required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
     },
     subcategory: {
       type: String,
@@ -31,13 +33,12 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
     brand: {
-      type: String,
-      required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'brands',
     },
     productId: {
       type: String,
       required: true,
-      unique: true,
     },
     productName: {
       type: String,
@@ -53,7 +54,7 @@ const productSchema = new mongoose.Schema(
     },
     discount: {
       type: Number,
-      default: 0, // in percentage, e.g., 20 for 20% off
+      default: 0,
     },
     price: {
       type: Number,

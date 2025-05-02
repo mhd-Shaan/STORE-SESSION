@@ -176,7 +176,7 @@ export const StoreRegestration3 = async (req, res) => {
       return res.status(400).json({ error: "storedescrption is required" });
     if (!pickupCode)
       return res.status(400).json({ error: "pickup code is required" });
-    const gst = await store.findOne({ GSTIN });
+    const gst = await Stores.findOne({ GSTIN });
     if (gst)
       return res.status(400).json({ error: "this gst is already exist" });
     const storeExists = await Tempstores.findOne({ email });
@@ -227,6 +227,12 @@ export const StoreLogin = async (req, res) => {
         .status(400)
         .json({ error: "Mobile number must be exactly 10 digits" });
     }
+    const matchnumber = await compareMobileNumber(
+      mobilenumber,
+      Store.mobileNumber
+    );
+    if (!matchnumber)
+      return res.status(403).json({ error: "Enter correct mobilenumber" });
     if (!password)
       return res.status(400).json({ error: "password  is requried" });
     if (password < 6)
@@ -236,12 +242,7 @@ export const StoreLogin = async (req, res) => {
     if (!match)
       return res.status(403).json({ error: "Enter correct password" });
 
-    const matchnumber = await compareMobileNumber(
-      mobilenumber,
-      Store.mobileNumber
-    );
-    if (!matchnumber)
-      return res.status(403).json({ error: "Enter correct mobilenumber" });
+    
 
     if (Store.isBlocked)
       return res

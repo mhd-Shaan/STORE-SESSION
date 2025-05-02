@@ -83,20 +83,20 @@ export default function AddingProducts() {
     }
   }, [formData.mrp, formData.price]);
 
-  // Check if product ID is available
-  const checkProductIdAvailability = async () => {
-    if (!formData.productId) return;
+  // // Check if product ID is available
+  // const checkProductIdAvailability = async () => {
+  //   if (!formData.productId) return;
     
-    try {
-      const response = await axios.get(
-        `http://localhost:5000/store/checkProductId?productId=${formData.productId}`,
-        { withCredentials: true }
-      );
-      setProductIdAvailable(response.data.available);
-    } catch (err) {
-      console.error("Error checking product ID:", err);
-    }
-  };
+  //   try {
+  //     const response = await axios.get(
+  //       `http://localhost:5000/store/checkProductId?productId=${formData.productId}`,
+  //       { withCredentials: true }
+  //     );
+  //     setProductIdAvailable(response.data.available);
+  //   } catch (err) {
+  //     console.error("Error checking product ID:", err);
+  //   }
+  // };
 
   // Fetch categories and brands on mount
   useEffect(() => {
@@ -289,13 +289,13 @@ export default function AddingProducts() {
               margin="normal"
               value={formData.productId}
               onChange={handleChange}
-              onBlur={checkProductIdAvailability}
+              // onBlur={checkProductIdAvailability}
               error={!!errors.productId}
-              helperText={
-                errors.productId || 
-                (formData.productId && productIdAvailable ? 
-                  "Product ID is available" : "")
-              }
+              // helperText={
+              //   errors.productId || 
+              //   (formData.productId && productIdAvailable ? 
+              //     "Product ID is available" : "")
+              // }
               required
               InputProps={{
                 endAdornment: formData.productId && (
