@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 
 function useFakeAuth() {
-  const { store } = useSelector((state) => state.store);
+  const { store } = useSelector((state) =>state.store);
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
   const errorShown = useRef(false);
@@ -18,9 +18,11 @@ function useFakeAuth() {
         const res = await axios.get("http://localhost:5000/store/fakeauth", {
           withCredentials: true,
         });
+        
 
         if (res.data.status === "approved") {
           dispatch(loginstore(res.data));
+          
         } else if (res.data.status === "rejected") {
           dispatch(logoutstore());
           await axios.post("http://localhost:5000/store/logout", {}, { withCredentials: true });
@@ -30,7 +32,7 @@ function useFakeAuth() {
           toast.error(error.response.data.error);
           errorShown.current = true;
         }else{
-          console.log(error.message);
+          console.log(error);
         }
 
         dispatch(logoutstore());
@@ -42,7 +44,7 @@ function useFakeAuth() {
 
     checkAuth();
   }, [dispatch]);
-  return { loading };
+  return { loading};
 }
 
 export default useFakeAuth;

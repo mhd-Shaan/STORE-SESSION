@@ -28,7 +28,8 @@ function StoreLogin() {
 
       if (response.data.userdetails.Store.status === "approved") {
         navigate("/Adminpanel");
-        dispatch(loginstore(response.data));
+        dispatch(loginstore(response.data.userdetails.Store));
+        
         toast.success("Welcome back");
       } else if (response.data.userdetails.Store.status === "rejected") {
         navigate("/");

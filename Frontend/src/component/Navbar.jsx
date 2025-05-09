@@ -16,34 +16,36 @@ import {
 import { AccountCircle, Notifications } from "@mui/icons-material";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { logoutstore } from "@/redux/storeslice";
 
 const Navbar = () => {
   const [storedetails, setStoredetails] = useState({
     fullName: "",
     pannumber: "",
     mobileNumber: "",
-    pickupDetails: { // ✅ Correct way
+    pickupDetails: {
       shopName: "",
       address: "",
       pickupCode: "",
     },
     GSTIN: "",
     storeDescription: "",
-  }); // Initialize as an object
+  });
+
+  const [errors, setErrors] = useState({});
   const [open, setOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(3);
   const [anchorEl, setAnchorEl] = useState(null);
   const [showProfileForm, setShowProfileForm] = useState(false);
   const navigate = useNavigate();
-
-  const { store } = useSelector((state) => state.store);  
-  
-console.log(storedetails.pickupDetails);
+  const dispatch = useDispatch();
+  const { store } = useSelector((state) => state.store);
 
   useEffect(() => {
     setStoredetails(store);
   }, [store]);
+
   const logout = async () => {
     try {
       await axios.post(
@@ -52,6 +54,7 @@ console.log(storedetails.pickupDetails);
         { withCredentials: true }
       );
       toast.success("Logout successful");
+      dispatch(logoutstore());
       navigate("/Storelogin");
     } catch (error) {
       console.log(error);
@@ -67,25 +70,9 @@ console.log(storedetails.pickupDetails);
     navigate("/Storelogin");
   };
 
-  const handleEdit = async () => {
-    try {
-      await axios.put("http://localhost:5000/store/editstore", storedetails, {
-        withCredentials: true,
-      });
-      toast.success('edited succesfully')
-    } catch (error) {
-      toast.error(error.response.data.error);
-      console.log(error);
-    }
-    setAnchorEl(null);
-    setShowProfileForm(false);
-
-  };
-
   const handleProfileClick = (event) => {
     setAnchorEl(event.currentTarget);
     setShowProfileForm(false);
-
   };
 
   const handleCloseProfileMenu = () => {
@@ -93,7 +80,47 @@ console.log(storedetails.pickupDetails);
     setShowProfileForm(false);
   };
 
+  // ✅ Validate form fields
+  const validate = () => {
+    const newErrors = {};
+    if (!storedetails.fullName.trim()) newErrors.fullName = "Full Name is required";
+    if (!storedetails.pannumber)
+      newErrors.pannumber = "Invalid PAN number";
+    if (!storedetails.mobileNumber.match(/^\d{10}$/))
+      newErrors.mobileNumber = "Invalid mobile number";
+    if (!storedetails.pickupDetails.shopName.trim())
+      newErrors.shopName = "Shop Name is required";
+    if (!storedetails.pickupDetails.address.trim())
+      newErrors.address = "Address is required";
+    if (!storedetails.pickupDetails.pickupCode.match(/^\d{6}$/))
+      newErrors.pickupCode = "Pin Code must be 6 digits";
+    if (!storedetails.GSTIN)
+      newErrors.GSTIN = "Invalid GSTIN";
+    if (!storedetails.storeDescription.trim())
+      newErrors.storeDescription = "Description is required";
 
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleEdit = async () => {
+    if (!validate()) {
+      toast.error("Please fix the errors in the form");
+      return;
+    }
+
+    try {
+      await axios.put("http://localhost:5000/store/editstore", storedetails, {
+        withCredentials: true,
+      });
+      toast.success("Edited successfully");
+      setShowProfileForm(false);
+      setAnchorEl(null);
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Error updating store");
+      console.log(error);
+    }
+  };
 
   return (
     <>
@@ -101,19 +128,16 @@ console.log(storedetails.pickupDetails);
         <h1 className="text-lg font-semibold text-gray-800">Admin Dashboard</h1>
 
         <div className="flex items-center space-x-4">
-          {/* Notification Icon */}
           <IconButton color="primary">
             <Badge badgeContent={notificationCount} color="error">
               <Notifications />
             </Badge>
           </IconButton>
 
-          {/* Profile Icon */}
           <IconButton onClick={handleProfileClick} color="primary">
             <AccountCircle fontSize="large" />
           </IconButton>
 
-          {/* Profile Dropdown */}
           <Menu
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
@@ -122,9 +146,7 @@ console.log(storedetails.pickupDetails);
           >
             {!showProfileForm ? (
               <div>
-                <MenuItem onClick={() => setShowProfileForm(true)}>
-                  Profile
-                </MenuItem>
+                <MenuItem onClick={() => setShowProfileForm(true)}>Profile</MenuItem>
                 <MenuItem onClick={handleOpenDialog}>Logout</MenuItem>
               </div>
             ) : (
@@ -133,129 +155,123 @@ console.log(storedetails.pickupDetails);
                   Edit Profile
                 </h2>
                 <form className="grid grid-cols-2 gap-3">
-                  {/* Left Column Inputs */}
                   <TextField
                     label="Full Name"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    value={storedetails?.fullName || ""}
+                    value={storedetails.fullName}
                     onChange={(e) =>
-                      setStoredetails({
-                        ...storedetails,
-                        fullName: e.target.value,
-                      })
+                      setStoredetails({ ...storedetails, fullName: e.target.value })
                     }
+                    error={!!errors.fullName}
+                    helperText={errors.fullName}
                   />
                   <TextField
                     label="Pan Number"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    value={storedetails?.pannumber || ""}
+                    value={storedetails.pannumber}
                     onChange={(e) =>
-                      setStoredetails({
-                        ...storedetails,
-                        pannumber: e.target.value,
-                      })
+                      setStoredetails({ ...storedetails, pannumber: e.target.value })
                     }
+                    error={!!errors.pannumber}
+                    helperText={errors.pannumber}
                   />
                   <TextField
                     label="Phone"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    value={storedetails?.mobileNumber || ""}
+                    value={storedetails.mobileNumber}
                     onChange={(e) =>
-                      setStoredetails({
-                        ...storedetails,
-                        mobileNumber: e.target.value,
-                      })
+                      setStoredetails({ ...storedetails, mobileNumber: e.target.value })
                     }
+                    error={!!errors.mobileNumber}
+                    helperText={errors.mobileNumber}
                   />
                   <TextField
                     label="Shop Name"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    value={storedetails?.pickupDetails?.shopName || ""}
+                    value={storedetails.pickupDetails.shopName}
                     onChange={(e) =>
                       setStoredetails({
                         ...storedetails,
                         pickupDetails: {
-                          ...storedetails.pickupDetails, // ✅ Keep existing data
-                          shopName: e.target.value, // ✅ Update only shopName
+                          ...storedetails.pickupDetails,
+                          shopName: e.target.value,
                         },
                       })
                     }
+                    error={!!errors.shopName}
+                    helperText={errors.shopName}
                   />
-
-                  {/* Right Column Inputs */}
                   <TextField
                     label="GSTNO"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    value={storedetails?.GSTIN || ""}
+                    value={storedetails.GSTIN}
                     onChange={(e) =>
-                      setStoredetails({
-                        ...storedetails,
-                        GSTIN: e.target.value,
-                      })
+                      setStoredetails({ ...storedetails, GSTIN: e.target.value })
                     }
+                    error={!!errors.GSTIN}
+                    helperText={errors.GSTIN}
                   />
                   <TextField
                     label="Address"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    value={storedetails?.pickupDetails?.address || ""}
+                    value={storedetails.pickupDetails.address}
                     onChange={(e) =>
                       setStoredetails({
                         ...storedetails,
                         pickupDetails: {
-                          ...storedetails.pickupDetails, // ✅ Keep existing data
-                          address: e.target.value, // ✅ Update only shopName
+                          ...storedetails.pickupDetails,
+                          address: e.target.value,
                         },
                       })
                     }
+                    error={!!errors.address}
+                    helperText={errors.address}
                   />
                   <TextField
                     label="Pin Code"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    value={storedetails?.pickupDetails?.pickupCode || ""}
+                    value={storedetails.pickupDetails.pickupCode}
                     onChange={(e) =>
                       setStoredetails({
                         ...storedetails,
                         pickupDetails: {
-                          ...storedetails.pickupDetails, // ✅ Keep existing data
-                          pickupCode: e.target.value, // ✅ Update only shopName
+                          ...storedetails.pickupDetails,
+                          pickupCode: e.target.value,
                         },
                       })
                     }
+                    error={!!errors.pickupCode}
+                    helperText={errors.pickupCode}
                   />
                   <TextField
                     label="Description"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    value={storedetails?.storeDescription || ""}
+                    value={storedetails.storeDescription}
                     onChange={(e) =>
-                      setStoredetails({
-                        ...storedetails,
-                        storeDescription: e.target.value,
-                      })
+                      setStoredetails({ ...storedetails, storeDescription: e.target.value })
                     }
+                    error={!!errors.storeDescription}
+                    helperText={errors.storeDescription}
                   />
                 </form>
                 <div className="flex justify-end gap-2 mt-3">
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleEdit}
-                  >
+                  <Button variant="contained" color="primary" onClick={handleEdit}>
                     Save
                   </Button>
                   <Button
@@ -276,9 +292,7 @@ console.log(storedetails.pickupDetails);
       <Dialog open={open} onClose={handleCloseDialog}>
         <DialogTitle>Confirm Logout</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            Are you sure you want to log out?
-          </DialogContentText>
+          <DialogContentText>Are you sure you want to log out?</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog} color="primary">

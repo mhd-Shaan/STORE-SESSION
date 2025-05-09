@@ -11,6 +11,7 @@ const storeSlice = createSlice({
   reducers: {
     loginstore: (state, action) => {
       state.store = action.payload;
+      
     },
     logoutstore: (state) => {
       state.store = null;

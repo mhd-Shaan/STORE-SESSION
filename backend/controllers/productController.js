@@ -5,7 +5,7 @@ import SubCategory from "../models/SubCatgoerySchema.js";
 
 export const addProduct = async (req, res) => {
   try {
-    const storeid = req.storeid;
+    const store = req.storeid;
 
     const {
       vehicleType,
@@ -48,7 +48,7 @@ export const addProduct = async (req, res) => {
     const imageUrls = req.files.map((file) => file.path);
 
     const newProduct = new Product({
-      storeid,
+      store,
       vehicleType,
       vehicleBrand,
       vehicleModel,
