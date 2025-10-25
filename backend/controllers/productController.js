@@ -83,13 +83,14 @@ export const addProduct = async (req, res) => {
 export const showProduct = async (req, res) => {
   try {
     const storeidd = req.storeid;
+    
 
     const {page=1,limit=10,search='',status='all'}=req.query    
 
     const skip =(page - 1)*limit;
 
     const searchFilter ={
-      storeid: storeidd, 
+      store: storeidd, 
       $or: [
         { productName: { $regex: search, $options: "i" } }, 
         { productId: { $regex: search, $options: "i" } }, 
@@ -104,6 +105,8 @@ export const showProduct = async (req, res) => {
     else if(status === 'unblocked'){
       searchFilter.isBlock=false
     }
+// const product = await Product.find({store:storeidd})
+// console.log(product);
 
     const totalproduct = await Product.countDocuments(searchFilter)
 

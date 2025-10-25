@@ -17,11 +17,14 @@ const storeSlice = createSlice({
       state.store = null;
       
     },
+     setStoreLocation: (state, action) => {
+      state.location = action.payload;
+    },
     updateRegistrationStep: (state, action) => {
       state.registrationStep = action.payload;
     },
   },
 });
 
-export const {loginstore,logoutstore,updateRegistrationStep}=storeSlice.actions;
+export const {loginstore,logoutstore,updateRegistrationStep,setStoreLocation}=storeSlice.actions;
 export default storeSlice.reducer;

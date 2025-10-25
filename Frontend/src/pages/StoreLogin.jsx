@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { loginstore } from "@/redux/storeslice";
+import { loginstore } from "@/redux/storeslice"; // Make sure your slice has loginstore
 
 function StoreLogin() {
   const [StoreData, setStoreData] = useState({
@@ -11,6 +11,8 @@ function StoreLogin() {
     mobilenumber: "",
     password: "",
   });
+
+  const [storeLocation, setLocalStoreLocation] = useState(null); // local state for store location
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -20,32 +22,47 @@ function StoreLogin() {
     const { email, password, mobilenumber } = StoreData;
 
     try {
+      // Login API
       const response = await axios.post(
         "http://localhost:5000/store/loginstore",
         { email, password, mobilenumber },
-        { withCredentials: true }
+        { withCredentials: true } // send cookies automatically
       );
+console.log(response);
 
-      if (response.data.userdetails.Store.status === "approved") {
-        navigate("/Adminpanel");
-        dispatch(loginstore(response.data.userdetails.Store));
-        
+      const store = response.data.userdetails.Store;
+
+      if (store.status === "approved") {
+        // Save store info to Redux
+        dispatch(loginstore(store));
+
+        // Fetch store location from backend (cookie-based auth)
+        const locationRes = await axios.get(
+          "http://localhost:5000/store/location",
+          { withCredentials: true }
+        );
+
+        setLocalStoreLocation(locationRes.data.location);
+        // Optional: save in Redux if you have slice for location
+        // dispatch(setStoreLocation(locationRes.data.location));
+
         toast.success("Welcome back");
-      } else if (response.data.userdetails.Store.status === "rejected") {
-        navigate("/");
+        navigate("/Adminpanel"); // or store dashboard
+      } else if (store.status === "rejected") {
         toast.error("Admin rejected your login request");
         await axios.post(
           "http://localhost:5000/store/logout",
           {},
           { withCredentials: true }
         );
-      } else {
         navigate("/");
+      } else {
         toast.error("Waiting for admin approval");
+        navigate("/");
       }
     } catch (error) {
       console.log(error);
-      toast.error(error.response?.data?.error );
+      toast.error(error.response?.data?.error || "Login failed");
     }
   };
 

@@ -18,6 +18,7 @@ export default function StoreRegistration3() {
   });
   const [cities, setCities] = useState([]);
   const [loadingCities, setLoadingCities] = useState(false);
+  const [coordinates, setCoordinates] = useState({ lat: 0, lng: 0 });
 
   const location = useLocation();
   const email = location.state?.email || "";
@@ -28,7 +29,7 @@ export default function StoreRegistration3() {
     const fetchCities = async () => {
       try {
         setLoadingCities(true);
-        const response = await axios.get('http://localhost:5000/store/showcities'); 
+        const response = await axios.get("http://localhost:5000/store/showcities");
         setCities(response.data.citys || []);
       } catch (error) {
         console.error("Error fetching cities:", error);
@@ -41,12 +42,33 @@ export default function StoreRegistration3() {
     fetchCities();
   }, []);
 
+  // Get browser geolocation
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCoordinates({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (err) => console.warn("Geolocation not allowed or failed", err)
+      );
+    }
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!coordinates.lat || !coordinates.lng) {
+      toast.error("Unable to get location. Allow location access.");
+      return;
+    }
+
     try {
       await axios.post(`http://localhost:5000/store/register3`, {
         ...data,
         email,
+        location: [coordinates.lng, coordinates.lat], // send as [lng, lat]
       });
       toast.success("Registration completed");
       navigate("/Storelogin");
@@ -59,7 +81,6 @@ export default function StoreRegistration3() {
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
       <Card className="bg-white shadow-md rounded-lg p-6 w-full max-w-2xl border">
-        {/* Header */}
         <div className="mb-4 text-center">
           <p className="text-sm font-medium text-gray-500">
             EMAIL ID & GST — PASSWORD CREATION — ONBOARDING DASHBOARD
@@ -68,7 +89,6 @@ export default function StoreRegistration3() {
           <p className="text-gray-600">Verification</p>
         </div>
 
-        {/* Contact Info */}
         <div className="flex flex-col md:flex-row items-center justify-between border-b pb-4 gap-2">
           <div className="flex items-center space-x-2">
             <EnvelopeIcon className="h-5 w-5 text-gray-500" />
@@ -76,13 +96,9 @@ export default function StoreRegistration3() {
           </div>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
-          {/* GSTIN Input */}
           <div className="mt-4">
-            <label className="text-sm font-medium text-gray-700">
-              Enter GSTIN
-            </label>
+            <label className="text-sm font-medium text-gray-700">Enter GSTIN</label>
             <Input
               type="text"
               value={data.GSTIN}
@@ -95,11 +111,8 @@ export default function StoreRegistration3() {
             </p>
           </div>
 
-          {/* Store & Pickup Details */}
           <div className="mt-6 space-y-3">
-            <p className="text-sm font-medium text-gray-700">
-              Store & Pickup Details
-            </p>
+            <p className="text-sm font-medium text-gray-700">Store & Pickup Details</p>
 
             <Input
               value={data.shopName}
@@ -115,7 +128,6 @@ export default function StoreRegistration3() {
               placeholder="Enter Address"
             />
 
-            {/* City Dropdown */}
             <div className="space-y-1">
               <label className="text-sm font-medium text-gray-700">City</label>
               <select
@@ -131,16 +143,12 @@ export default function StoreRegistration3() {
                   </option>
                 ))}
               </select>
-              {loadingCities && (
-                <p className="text-xs text-gray-500">Loading cities...</p>
-              )}
+              {loadingCities && <p className="text-xs text-gray-500">Loading cities...</p>}
             </div>
 
             <Input
               value={data.storeDescription}
-              onChange={(e) =>
-                setData({ ...data, storeDescription: e.target.value })
-              }
+              onChange={(e) => setData({ ...data, storeDescription: e.target.value })}
               type="text"
               placeholder="Enter Store Description"
             />
@@ -153,11 +161,7 @@ export default function StoreRegistration3() {
             />
           </div>
 
-          {/* Save Button */}
-          <Button
-            type="submit"
-            className="mt-6 w-full bg-blue-600 hover:bg-purple-700"
-          >
+          <Button type="submit" className="mt-6 w-full bg-blue-600 hover:bg-purple-700">
             Save
           </Button>
         </form>

@@ -41,7 +41,7 @@ export default function StoreProducts() {
        
       setProducts(res.data.productdetails);
       setTotalPages(res.data.totalPages)
-      console.log(res.data.totalPages);
+      console.log(res.data);
       
 
     } catch (error) {

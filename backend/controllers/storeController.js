@@ -161,56 +161,63 @@ export const StoreRegestration2 = async (req, res) => {
   }
 };
 
+
 export const StoreRegestration3 = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { email, GSTIN, shopName, pickupCode, address, storeDescription, city, location } = req.body;
 
-    const { email, GSTIN, shopName, pickupCode, address, storeDescription,city } =
-      req.body;
-    if (!email) return res.status(400).json({ error: "email is required" });
+    // Validations
+    if (!email) return res.status(400).json({ error: "Email is required" });
     if (!GSTIN) return res.status(400).json({ error: "GSTIN is required" });
-    if (!shopName)
-      return res.status(400).json({ error: "shopname is required" });
-    if (!address) return res.status(400).json({ error: "address is required" });
-    if (!storeDescription)
-      return res.status(400).json({ error: "storedescrption is required" });
-    if (!pickupCode)
-      return res.status(400).json({ error: "pickup code is required" });
-    const gst = await Stores.findOne({ GSTIN });
-    if (gst)
-      return res.status(400).json({ error: "this gst is already exist" });
-    const storeExists = await Tempstores.findOne({ email });
-    if (!storeExists) {
-      return res.status(404).json({ error: "stores not found" });
+    if (!shopName) return res.status(400).json({ error: "Shop name is required" });
+    if (!address) return res.status(400).json({ error: "Address is required" });
+    if (!storeDescription) return res.status(400).json({ error: "Store description is required" });
+    if (!pickupCode) return res.status(400).json({ error: "Pickup code is required" });
+    if (!city) return res.status(400).json({ error: "City is required" });
+    if (!location || !Array.isArray(location) || location.length !== 2) {
+      return res.status(400).json({ error: "Location coordinates are required [lng, lat]" });
     }
-    if(!city) return res.status(404).json({error:"city is required"})
 
+    // Check GSTIN uniqueness
+    const gst = await Stores.findOne({ GSTIN });
+    if (gst) return res.status(400).json({ error: "This GSTIN already exists" });
+
+    // Check if temp store exists
+    const storeExists = await Tempstores.findOne({ email });
+    if (!storeExists) return res.status(404).json({ error: "Temp store not found" });
+
+    // Create new store
     const newStore = new Stores({
       email: storeExists.email,
       mobileNumber: storeExists.mobileNumber,
       password: storeExists.password,
       fullName: storeExists.fullName,
       city,
-      pannumber:storeExists.pannumber,
-      pdfUrls:storeExists.pdfUrls, // Append new PDFs
+      pannumber: storeExists.pannumber,
+      pdfUrls: storeExists.pdfUrls || [],
       GSTIN,
       storeDescription,
       pickupDetails: {
         shopName,
         pickupCode,
         address,
+        location: {
+          type: "Point",
+          coordinates: location, // [lng, lat]
+        },
       },
     });
 
     await newStore.save();
     await Tempstores.deleteOne({ email });
 
-    res.status(200).json({ message: "regstration  completed" });
+    res.status(200).json({ message: "Registration completed successfully" });
   } catch (error) {
-    res.status(500).json({ message: "error completing step 3." });
-    console.log(error);
+    console.error(error);
+    res.status(500).json({ error: "Error completing step 3." });
   }
 };
+
 
 export const StoreLogin = async (req, res) => {
   try {
@@ -452,3 +459,23 @@ export const showcity = async(req,res)=>{
     return res.status(500).json({ error});
   }
 }
+
+export const getStoreLocation = async (req, res) => {
+  try {
+    const storeId = req.storeid; 
+    const store = await Stores.findById(storeId).select(
+      "pickupDetails.shopName pickupDetails.address pickupDetails.location"
+    );
+
+    if (!store) return res.status(404).json({ error: "Store not found" });
+
+    res.status(200).json({
+      shopName: store.pickupDetails.shopName,
+      address: store.pickupDetails.address,
+      location: store.pickupDetails.location,
+    });
+  } catch (error) {
+    console.log("Error fetching store location:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
