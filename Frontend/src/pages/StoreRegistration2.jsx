@@ -28,8 +28,10 @@ export default function StoreRegistration2() {
   };
 
   const handleSubmit = async (e) => {
+    
     e.preventDefault();
     try {
+
       const formData = new FormData();
       formData.append("email", email);
       formData.append("password", data.password);
@@ -45,7 +47,9 @@ export default function StoreRegistration2() {
       toast.success("Step 2 completed");
       navigate("/Storeregstration3", { state: { email } });
     } catch (error) {
-      console.error("Error during step 2:", error);
+            console.log('hi');
+
+      console.error("Error during step 2 :", error);
       toast.error(error.response?.data?.error || "Failed to complete step 2");
     }
   };
